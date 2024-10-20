@@ -26,16 +26,16 @@ timeToDecimalMinutes tod = round ((1000 :: Double) - (fractionOfDayPassed tod * 
 -- 'construct' to lift the pure functions into the MachineT context.
 --
 -- This approach will allow for us to enhance the solution in the future with further processing.
-getZonedTime' :: ProcessT IO k ZonedTime
-getZonedTime' = construct $ do
-  zt <- liftIO getZonedTime
-  yield zt
-
 zonedToTimeOfDay :: ZonedTime -> TimeOfDay
 zonedToTimeOfDay = localTimeOfDay . zonedTimeToLocalTime
 
 formatOutput :: Int -> T.Text
 formatOutput m = T.pack $ "Decimal time: " ++ show m
+
+getZonedTime' :: ProcessT IO k ZonedTime
+getZonedTime' = construct $ do
+  zt <- liftIO getZonedTime
+  yield zt
 
 outputResult :: ProcessT IO T.Text ()
 outputResult = construct $ do
@@ -45,7 +45,7 @@ outputResult = construct $ do
 main :: IO ()
 main = runT_ $ 
   getZonedTime'
-    ~> autoM (return . zonedToTimeOfDay)
-    ~> autoM (return . timeToDecimalMinutes)
-    ~> autoM (return . formatOutput)
+    ~> mapping zonedToTimeOfDay
+    ~> mapping timeToDecimalMinutes
+    ~> mapping formatOutput
     ~> outputResult
