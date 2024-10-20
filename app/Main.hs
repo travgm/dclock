@@ -2,7 +2,7 @@
 
 import Data.Time
 import Data.Machine
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -13,45 +13,39 @@ secondsSinceMidnight :: TimeOfDay -> Double
 secondsSinceMidnight tod = fromIntegral (todHour tod * 3600 + todMin tod * 60) + realToFrac (todSec tod)
 
 fractionOfDayPassed :: TimeOfDay -> Double
-fractionOfDayPassed tod = secondsSinceMidnight tod / (24 * 60 * 60)
+fractionOfDayPassed tod = secondsSinceMidnight tod / sid
+  where
+    sid = 24 * 60 * 60
 
 timeToDecimalMinutes :: TimeOfDay -> Int
 timeToDecimalMinutes tod = round ((1000 :: Double) - (fractionOfDayPassed tod * 1000))
 
 -- The process used below to calculate decimal minutes from the system clock utilizes the machines
 -- package to construct a compositional monadic pipeline. A simple way to integrate monadic processing
--- of pure functions with IO. Each pipeline is a morphism in the category machines. I use 'autoM' and
+-- of pure functions with IO. Each pipeline is a morphism in the category machines and I use 'autoM' and
 -- 'construct' to lift the pure functions into the MachineT context.
 --
 -- This approach will allow for us to enhance the solution in the future with further processing.
-getZonedTime' :: (MonadIO m) => MachineT m k ZonedTime
+getZonedTime' :: ProcessT IO k ZonedTime
 getZonedTime' = construct $ do
-  zt <- liftIO Data.Time.getZonedTime
+  zt <- liftIO getZonedTime
   yield zt
 
-zonedToTimeOfDay :: (Monad m) => MachineT m (Is ZonedTime) TimeOfDay
-zonedToTimeOfDay = autoM $ return . localTimeOfDay . zonedTimeToLocalTime
+zonedToTimeOfDay :: ZonedTime -> TimeOfDay
+zonedToTimeOfDay = localTimeOfDay . zonedTimeToLocalTime
 
-decimalMinutes :: (Monad m) => MachineT m (Is TimeOfDay) Int
-decimalMinutes = autoM $ return . timeToDecimalMinutes
+formatOutput :: Int -> T.Text
+formatOutput m = T.pack $ "Decimal time: " ++ show m
 
-formatOutput :: (Monad m) => MachineT m (Is Int) T.Text
-formatOutput = autoM $ \decMinutes ->
-  return $ T.pack $ "Decimal time: " ++ show decMinutes
-
-outputResult :: (MonadIO m) => MachineT m (Is T.Text) ()
+outputResult :: ProcessT IO T.Text ()
 outputResult = construct $ do
-  text <- await
-  liftIO $ TIO.putStrLn text
-
--- Machine plan
-decimalTimeMachine :: (MonadIO m) => MachineT m k ()
-decimalTimeMachine =
-  getZonedTime'
-    ~> zonedToTimeOfDay
-    ~> decimalMinutes
-    ~> formatOutput
-    ~> outputResult
+    text <- await
+    liftIO $ TIO.putStrLn text
 
 main :: IO ()
-main = runT_ decimalTimeMachine
+main = runT_ $ 
+  getZonedTime'
+    ~> autoM (return . zonedToTimeOfDay)
+    ~> autoM (return . timeToDecimalMinutes)
+    ~> autoM (return . formatOutput)
+    ~> outputResult
