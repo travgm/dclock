@@ -13,10 +13,12 @@ secondsSinceMidnight :: TimeOfDay -> Double
 secondsSinceMidnight (TimeOfDay h m s) = fromIntegral (h * 3600 + m * 60) + realToFrac s
 
 fractionOfDayPassed :: TimeOfDay -> Double
-fractionOfDayPassed tod = secondsSinceMidnight tod / 86400
+fractionOfDayPassed = (/ totalSecondsInDay) . secondsSinceMidnight
+  where
+    totalSecondsInDay = 24 * 60 * 60 :: Double
 
 timeToDecimalMinutes :: TimeOfDay -> Int
-timeToDecimalMinutes tod = round $ (1000 :: Double) - (fractionOfDayPassed tod * 1000)
+timeToDecimalMinutes = round . (1000 -) . (* 1000) . fractionOfDayPassed
 
 -- The process used below to calculate decimal minutes from the system clock utilizes the machines
 -- package to construct a compositional monadic pipeline. A simple way to integrate monadic processing
