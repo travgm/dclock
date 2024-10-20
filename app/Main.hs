@@ -6,9 +6,11 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
--- Pure functions used to calculate the decimal time from Data.Time.getZonedTime
--- DT = ⌊1000 - (1000 * (HR * 3600 + MIN * 60 + SSEC) / 86400)⌋
--- Where DT is decimal time, HR is hour, MIN is minute, SEC is second
+-- | Pure functions used to calculate the decimal time from Data.Time.getZonedTime
+--
+-- D = ⌊1000 - (1000 * (H * 3600 + M * 60 + S) / 86400)⌋
+-- Where D is decimal time, H is hour, M is minute, S is second
+--
 secondsSinceMidnight :: TimeOfDay -> Double
 secondsSinceMidnight (TimeOfDay h m s) = fromIntegral (h * 3600 + m * 60) + realToFrac s
 
@@ -20,28 +22,30 @@ fractionOfDayPassed = (/ totalSecondsInDay) . secondsSinceMidnight
 timeToDecimalMinutes :: TimeOfDay -> Int
 timeToDecimalMinutes = round . (1000 -) . (* 1000) . fractionOfDayPassed
 
--- The process used below to calculate decimal minutes from the system clock utilizes the machines
+-- | The process used below to calculate decimal minutes from the system clock utilizes the machines
 -- package to construct a compositional monadic pipeline. A simple way to integrate monadic processing
--- of pure functions with IO. Each pipeline is a morphism in the category machines and I use 'autoM' and
--- 'construct' to lift the pure functions into the MachineT context.
+-- of pure functions with IO.
 --
 -- This approach will allow for us to enhance the solution in the future with further processing.
+--
 zonedToTimeOfDay :: ZonedTime -> TimeOfDay
 zonedToTimeOfDay = localTimeOfDay . zonedTimeToLocalTime
 
-formatOutput :: Int -> T.Text
-formatOutput m = T.pack $ "Decimal time: " ++ show m
-
+-- Retrieve initial time
 getZonedTime' :: ProcessT IO k ZonedTime
 getZonedTime' = construct $ do
   zt <- liftIO getZonedTime
   yield zt
+
+formatOutput :: Int -> T.Text
+formatOutput m = T.pack $ "Decimal time: " ++ show m  
 
 outputResult :: ProcessT IO T.Text ()
 outputResult = construct $ do
     text <- await
     liftIO $ TIO.putStrLn text
 
+-- Run the machine 
 main :: IO ()
 main = runT_ $ 
   getZonedTime'
