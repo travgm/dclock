@@ -10,15 +10,13 @@ import qualified Data.Text.IO as TIO
 -- DT = ⌊1000 - (1000 * (HR * 3600 + MIN * 60 + SSEC) / 86400)⌋
 -- Where DT is decimal time, HR is hour, MIN is minute, SEC is second
 secondsSinceMidnight :: TimeOfDay -> Double
-secondsSinceMidnight tod = fromIntegral (todHour tod * 3600 + todMin tod * 60) + realToFrac (todSec tod)
+secondsSinceMidnight (TimeOfDay h m s) = fromIntegral (h * 3600 + m * 60) + realToFrac s
 
 fractionOfDayPassed :: TimeOfDay -> Double
-fractionOfDayPassed tod = secondsSinceMidnight tod / sid
-  where
-    sid = 24 * 60 * 60
+fractionOfDayPassed tod = secondsSinceMidnight tod / 86400
 
 timeToDecimalMinutes :: TimeOfDay -> Int
-timeToDecimalMinutes tod = round ((1000 :: Double) - (fractionOfDayPassed tod * 1000))
+timeToDecimalMinutes tod = round $ (1000 :: Double) - (fractionOfDayPassed tod * 1000)
 
 -- The process used below to calculate decimal minutes from the system clock utilizes the machines
 -- package to construct a compositional monadic pipeline. A simple way to integrate monadic processing
