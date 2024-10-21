@@ -53,3 +53,4 @@ main = runT_ $
     ~> mapping timeToDecimalMinutes
     ~> mapping formatOutput
     ~> outputResult
+
