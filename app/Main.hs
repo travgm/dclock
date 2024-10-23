@@ -86,43 +86,49 @@ dec :: TimeOfDay -> Either String ValidDecimalTime
 dec = mkVDT . DecimalTime . d
   where
     d = round . (1000 -) . (* 1000) . frac
+    {-# INLINE d #-}
 
--- | The process used below to calculate decimal minutes from the system clock utilizes the machines
--- package to construct a compositional monadic pipeline. A simple way to integrate monadic processing
--- of pure functions with IO.
---
--- This approach will allow for us to enhance the solution in the future with further processing.
---
+-- | Transform zoned time to local time
 loc :: ZonedTime -> TimeOfDay
 loc = localTimeOfDay . zonedTimeToLocalTime
 
--- Retrieve initial time and create our process
--- producer
+-- | Retrieve initial time and create our process (producer
 zone :: ProcessT IO k ZonedTime
 zone = construct $ do
   zt <- liftIO getZonedTime
   yield zt
 
+-- | Format the output of the validation
+-- We will either output an error message if decimal time failed validation or we will unwrap
+-- and pack our decimal time to be displayed.
+-- prop> fmt (Right $ ValidDecimalTime (DecimalTime 1000)) == "Decimal time: NEW"
+-- prop> fmt (Right $ ValidDecimalTime (DecimalTime 500)) == "Decimal time: 500"
+-- prop> fmt (Right $ ValidDecimalTime (DecimalTime 333)) == "Decimal time: 333"
+-- prop> fmt (Left "error") == "Decimal time: error"
 {-# INLINE fmt #-}
 fmt :: Either String ValidDecimalTime -> T.Text
 fmt = ("Decimal time: " <>) . either T.pack (fd . unVDT)
   where
     fd = \case
-        DecimalTime 1000 -> "NEW"
-        DecimalTime t    -> T.pack . show $ t
+      DecimalTime 1000 -> "NEW"
+      DecimalTime t -> T.pack . show $ t
 
--- Output the decimal time
--- consumer
+-- | Output the valid decimal time (consumer)
 result :: ProcessT IO T.Text ()
 result = construct $ do
   text <- await
   liftIO $ TIO.putStrLn text
 
+-- | The process used below to calculate decimal minutes from the system clock utilizes the machines
+-- package to construct a compositional monadic pipeline. A simple way to integrate monadic processing
+-- of pure functions with IO.
+--
 -- Run the machine and transform the data
 main :: IO ()
-main = runT_ $ 
-  zone
-    ~> mapping loc
-    ~> mapping dec
-    ~> mapping fmt
-    ~> result
+main =
+  runT_ $
+    zone
+      ~> mapping loc
+      ~> mapping dec
+      ~> mapping fmt
+      ~> result
