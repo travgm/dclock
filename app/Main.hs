@@ -28,10 +28,10 @@ import qualified Data.Text.IO as TIO
 -- | Type alias's created to help with the abstraction of concrete types to what
 -- we are producing with our pure functions and type safety.
 newtype Seconds = Seconds Double
-    deriving (Eq, Show, Ord, Num, Fractional, Real, RealFrac)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac)
 
 newtype Days = Days Double
-    deriving (Eq, Show, Ord, Num, Fractional, Real, RealFrac)
+    deriving (Eq, Ord, Num, Fractional, Real, RealFrac)
 
 newtype DecimalTime = DecimalTime Int
     deriving (Eq, Show, Ord, Num, Enum, Real, Integral)
@@ -76,13 +76,13 @@ dec = round . (1000 -) . (* 1000) . frac
 --
 -- This approach will allow for us to enhance the solution in the future with further processing.
 --
-loctime :: ZonedTime -> TimeOfDay
-loctime = localTimeOfDay . zonedTimeToLocalTime
+locTime :: ZonedTime -> TimeOfDay
+locTime = localTimeOfDay . zonedTimeToLocalTime
 
 -- Retrieve initial time and create our process
 -- producer
-zonetime :: ProcessT IO k ZonedTime
-zonetime = construct $ do
+zoneTime :: ProcessT IO k ZonedTime
+zoneTime = construct $ do
   zt <- liftIO getZonedTime
   yield zt
 
@@ -102,8 +102,8 @@ result = construct $ do
 -- Run the machine and transform the data
 main :: IO ()
 main = runT_ $ 
-  zonetime
-    ~> mapping loctime
+  zoneTime
+    ~> mapping locTime
     ~> mapping dec
     ~> mapping fmtOut
     ~> result
