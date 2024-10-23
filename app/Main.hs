@@ -102,7 +102,7 @@ zone = construct $ do
 -- prop> fmt (Right $ ValidDecimalTime (DecimalTime 1000)) == "Decimal time: NEW"
 -- prop> fmt (Right $ ValidDecimalTime (DecimalTime 500)) == "Decimal time: 500"
 -- prop> fmt (Right $ ValidDecimalTime (DecimalTime 333)) == "Decimal time: 333"
--- prop> fmt (Left "error") == "Decimal time: error"
+-- prop> fmt (Left "Time must be between 0 and 1000") == "Decimal time: Time must be between 0 and 1000"
 {-# INLINE fmt #-}
 fmt :: Either String ValidDecimalTime -> T.Text
 fmt = ("Decimal time: " <>) . either T.pack (fd . unVDT)
