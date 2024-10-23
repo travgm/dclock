@@ -43,7 +43,7 @@ sec (TimeOfDay !h !m !s) = ((*3600) h' + (*60) m') + s'
     m' = fromIntegral m
     s' = realToFrac s
 
--- Get fraction of day
+-- | Get fraction of day
 -- prop> frac (TimeOfDay 0 0 0) == 0.0
 -- prop> frac (TimeOfDay 12 0 0) == 0.5
 {-# INLINE frac #-}
@@ -53,7 +53,7 @@ frac = (/ secDay) . sec
     secDay = 24 * 60 * 60 :: Seconds
     {-# INLINE secDay #-}
 
--- Convert fraction of day to decimal time
+-- | Convert fraction of day to decimal time
 -- prop> dec (TimeOfDay 0 0 0) == 1000
 -- prop> dec (TimeOfDay 12 0 0) == 500
 -- prop> dec (TimeOfDay 16 0 0) == 333
