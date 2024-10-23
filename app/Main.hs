@@ -76,19 +76,19 @@ dec = round . (1000 -) . (* 1000) . frac
 --
 -- This approach will allow for us to enhance the solution in the future with further processing.
 --
-locTime :: ZonedTime -> TimeOfDay
-locTime = localTimeOfDay . zonedTimeToLocalTime
+loc :: ZonedTime -> TimeOfDay
+loc = localTimeOfDay . zonedTimeToLocalTime
 
 -- Retrieve initial time and create our process
 -- producer
-zoneTime :: ProcessT IO k ZonedTime
-zoneTime = construct $ do
+zone :: ProcessT IO k ZonedTime
+zone = construct $ do
   zt <- liftIO getZonedTime
   yield zt
 
-{-# INLINE fmtOut #-}
-fmtOut :: DecimalTime -> T.Text
-fmtOut m = "Decimal time: " <> case m of
+{-# INLINE fmt #-}
+fmt :: DecimalTime -> T.Text
+fmt m = "Decimal time: " <> case m of
   DecimalTime 1000 -> "NEW"
   DecimalTime t -> T.pack (show t)
 
@@ -102,8 +102,8 @@ result = construct $ do
 -- Run the machine and transform the data
 main :: IO ()
 main = runT_ $ 
-  zoneTime
-    ~> mapping locTime
+  zone
+    ~> mapping loc
     ~> mapping dec
-    ~> mapping fmtOut
+    ~> mapping fmt
     ~> result
