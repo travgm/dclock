@@ -1,6 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
+
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (c) Travis Montoya 2024
@@ -36,6 +38,17 @@ newtype Days = Days Double
 newtype DecimalTime = DecimalTime Int
     deriving (Eq, Show, Ord, Num, Enum, Real, Integral)
 
+-- | Validation for our decimal time values
+newtype ValidDecimalTime = ValidDecimalTime 
+    { unVDT:: DecimalTime }
+    deriving (Show, Eq)
+
+{-# INLINABLE mkVDT #-}
+mkVDT :: DecimalTime -> Either String ValidDecimalTime
+mkVDT dt@(DecimalTime t)
+    | t >= 0 && t <= 1000 = Right $ ValidDecimalTime dt
+    | otherwise = Left "Time must be between 0 and 1000"
+
 -- | Pure functions used to calculate the decimal time from Data.Time.getZonedTime
 --
 -- D = |1000 - (1000 * (H * 3600 + M * 60 + S) / 86400)|
@@ -43,7 +56,9 @@ newtype DecimalTime = DecimalTime Int
 --
 -- prop> sec (TimeOfDay 0 0 0) == 0.0 
 -- prop> sec (TimeOfDay 1 0 0) == 3600.0 
+-- +++ OK, passed 1 test.
 -- prop> sec (TimeOfDay 24 0 0) == 86400.0
+-- +++ OK, passed 1 test.
 {-# INLINE sec #-}
 sec :: TimeOfDay -> Seconds
 sec (TimeOfDay !h !m !s) = ((*3600) h' + (*60) m') + s'
@@ -67,8 +82,10 @@ frac = Days . (/ secd) . (\(Seconds s) -> s) . sec
 -- prop> dec (TimeOfDay 12 0 0) == 500
 -- prop> dec (TimeOfDay 16 0 0) == 333
 {-# INLINE dec #-}
-dec :: TimeOfDay -> DecimalTime
-dec = round . (1000 -) . (* 1000) . frac
+dec :: TimeOfDay -> Either String ValidDecimalTime
+dec = mkVDT . DecimalTime . d
+  where
+    d = round . (1000 -) . (* 1000) . frac
 
 -- | The process used below to calculate decimal minutes from the system clock utilizes the machines
 -- package to construct a compositional monadic pipeline. A simple way to integrate monadic processing
@@ -87,10 +104,12 @@ zone = construct $ do
   yield zt
 
 {-# INLINE fmt #-}
-fmt :: DecimalTime -> T.Text
-fmt m = "Decimal time: " <> case m of
-  DecimalTime 1000 -> "NEW"
-  DecimalTime t -> T.pack (show t)
+fmt :: Either String ValidDecimalTime -> T.Text
+fmt = ("Decimal time: " <>) . either T.pack (fd . unVDT)
+  where
+    fd = \case
+        DecimalTime 1000 -> "NEW"
+        DecimalTime t    -> T.pack . show $ t
 
 -- Output the decimal time
 -- consumer
