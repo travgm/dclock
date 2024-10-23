@@ -54,9 +54,7 @@ mkVDT dt@(DecimalTime t)
 --
 -- prop> sec (TimeOfDay 0 0 0) == 0.0 
 -- prop> sec (TimeOfDay 1 0 0) == 3600.0 
--- +++ OK, passed 1 test.
 -- prop> sec (TimeOfDay 24 0 0) == 86400.0
--- +++ OK, passed 1 test.
 {-# INLINE sec #-}
 sec :: TimeOfDay -> Seconds
 sec (TimeOfDay !h !m !s) = ((*3600) h' + (*60) m') + s'
@@ -66,6 +64,7 @@ sec (TimeOfDay !h !m !s) = ((*3600) h' + (*60) m') + s'
     s' = realToFrac s
 
 -- | Get fraction of the day
+--
 -- prop> frac (TimeOfDay 0 0 0) == 0.0
 -- prop> frac (TimeOfDay 12 0 0) == 0.5
 {-# INLINE frac #-}
@@ -76,6 +75,7 @@ frac = Days . (/ secd) . (\(Seconds s) -> s) . sec
     {-# INLINE secd #-}
 
 -- | Convert fraction of day to decimal time
+--
 -- prop> dec (TimeOfDay 0 0 0) == 1000
 -- prop> dec (TimeOfDay 12 0 0) == 500
 -- prop> dec (TimeOfDay 16 0 0) == 333
@@ -99,6 +99,7 @@ zone = construct $ do
 -- | Format the output of the validation
 -- We will either output an error message if decimal time failed validation or we will unwrap
 -- and pack our decimal time to be displayed.
+--
 -- prop> fmt (Right $ ValidDecimalTime (DecimalTime 1000)) == "Decimal time: NEW"
 -- prop> fmt (Right $ ValidDecimalTime (DecimalTime 500)) == "Decimal time: 500"
 -- prop> fmt (Right $ ValidDecimalTime (DecimalTime 333)) == "Decimal time: 333"
