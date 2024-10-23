@@ -23,7 +23,7 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
-type Seconds = Days
+type Seconds = Double
 type Days = Double
 type DecimalTime = Int
 
@@ -76,7 +76,7 @@ getZt = construct $ do
   zt <- liftIO getZonedTime
   yield zt
 
-fmtOut :: Int -> T.Text
+fmtOut :: DecimalTime -> T.Text
 fmtOut m = T.pack $ "Decimal time: " ++ show m  
 
 result :: ProcessT IO T.Text ()
