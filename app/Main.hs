@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (c) Travis Montoya 2024
@@ -11,8 +12,9 @@
 -- day with usable time left we use 1000 as a number counting down from
 -- midnight.
 --
--- Originally written for the Watchy https://git.sr.ht/~jochen/Calculateur
--- Re-written in Haskell
+-- This is an implementation of the Calculateur concept originally written
+-- for the Watchy https://git.sr.ht/~jochen/Calculateur
+--
 -----------------------------------------------------------------------------
 
 module Main where
@@ -23,9 +25,16 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
-type Seconds = Double
-type Days = Double
-type DecimalTime = Int
+-- | Type alias's created to help with the abstraction of concrete types to what
+-- we are producing with our pure functions and type safety.
+newtype Seconds = Seconds Double
+    deriving (Eq, Show, Ord, Num, Fractional, Real, RealFrac)
+
+newtype Days = Days Double
+    deriving (Eq, Show, Ord, Num, Fractional, Real, RealFrac)
+
+newtype DecimalTime = DecimalTime Int
+    deriving (Eq, Show, Ord, Num, Enum, Real, Integral)
 
 -- | Pure functions used to calculate the decimal time from Data.Time.getZonedTime
 --
@@ -48,10 +57,10 @@ sec (TimeOfDay !h !m !s) = ((*3600) h' + (*60) m') + s'
 -- prop> frac (TimeOfDay 12 0 0) == 0.5
 {-# INLINE frac #-}
 frac :: TimeOfDay -> Days
-frac = (/ secDay) . sec
+frac = Days . (/ secd) . (\(Seconds s) -> s) . sec
   where
-    secDay = 24 * 60 * 60 :: Seconds
-    {-# INLINE secDay #-}
+    secd = 24 * 60 * 60
+    {-# INLINE secd #-}
 
 -- | Convert fraction of day to decimal time
 -- prop> dec (TimeOfDay 0 0 0) == 1000
@@ -71,6 +80,7 @@ loctime :: ZonedTime -> TimeOfDay
 loctime = localTimeOfDay . zonedTimeToLocalTime
 
 -- Retrieve initial time and create our process
+-- producer
 zonetime :: ProcessT IO k ZonedTime
 zonetime = construct $ do
   zt <- liftIO getZonedTime
@@ -79,15 +89,17 @@ zonetime = construct $ do
 {-# INLINE fmtOut #-}
 fmtOut :: DecimalTime -> T.Text
 fmtOut m = "Decimal time: " <> case m of
-  1000 -> "NEW"
-  _    -> T.pack (show m)
+  DecimalTime 1000 -> "NEW"
+  DecimalTime t -> T.pack (show t)
 
+-- Output the decimal time
+-- consumer
 result :: ProcessT IO T.Text ()
 result = construct $ do
   text <- await
   liftIO $ TIO.putStrLn text
 
--- Run the machine 
+-- Run the machine and transform the data
 main :: IO ()
 main = runT_ $ 
   zonetime
