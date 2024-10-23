@@ -2,7 +2,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
-
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (c) Travis Montoya 2024
@@ -18,7 +17,6 @@
 -- for the Watchy https://git.sr.ht/~jochen/Calculateur
 --
 -----------------------------------------------------------------------------
-
 module Main where
 
 import Data.Time
