@@ -5,12 +5,14 @@ license:            MIT
 license-file:       LICENSE
 author:             Travis Montoya
 maintainer:         trav@hexproof.sh
+homepage:           https://github.com/travgm/dclock
 build-type:         Simple
-
+synopsis:           dclock
+description:        A simple decimal clock that maps your day to usable decimal minutes        
 extra-doc-files:    CHANGELOG.md
 
 common warnings
-    ghc-options: -Wall
+    ghc-options: -Wall -fwarn-tabs -O2
 
 executable dclock
     import:           warnings
