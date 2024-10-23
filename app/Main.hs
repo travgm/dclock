@@ -57,7 +57,6 @@ frac = (/ secDay) . sec
 -- prop> dec (TimeOfDay 0 0 0) == 1000
 -- prop> dec (TimeOfDay 12 0 0) == 500
 -- prop> dec (TimeOfDay 16 0 0) == 333
--- +++ OK, passed 1 test.
 {-# INLINE dec #-}
 dec :: TimeOfDay -> DecimalTime
 dec = round . (1000 -) . (* 1000) . frac
