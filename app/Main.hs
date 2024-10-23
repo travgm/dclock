@@ -29,7 +29,7 @@ type DecimalTime = Int
 
 -- | Pure functions used to calculate the decimal time from Data.Time.getZonedTime
 --
--- D = ⌊1000 - (1000 * (H * 3600 + M * 60 + S) / 86400)⌋
+-- D = |1000 - (1000 * (H * 3600 + M * 60 + S) / 86400)|
 -- Where D is decimal time, H is hour, M is minute, S is second
 --
 -- prop> sec (TimeOfDay 0 0 0) == 0.0 
@@ -43,7 +43,7 @@ sec (TimeOfDay !h !m !s) = ((*3600) h' + (*60) m') + s'
     m' = fromIntegral m
     s' = realToFrac s
 
--- | Get fraction of day
+-- | Get fraction of the day
 -- prop> frac (TimeOfDay 0 0 0) == 0.0
 -- prop> frac (TimeOfDay 12 0 0) == 0.5
 {-# INLINE frac #-}
@@ -70,7 +70,7 @@ dec = round . (1000 -) . (* 1000) . frac
 loctime :: ZonedTime -> TimeOfDay
 loctime = localTimeOfDay . zonedTimeToLocalTime
 
--- Retrieve initial time
+-- Retrieve initial time and create our process
 zonetime :: ProcessT IO k ZonedTime
 zonetime = construct $ do
   zt <- liftIO getZonedTime
