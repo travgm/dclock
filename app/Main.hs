@@ -16,6 +16,9 @@
 -- This is an implementation of the Calculateur concept originally written
 -- for the Watchy https://git.sr.ht/~jochen/Calculateur
 --
+--
+-- D = |1000 - (1000 * (H * 3600 + M * 60 + S) / 86400)|
+-- Where D is decimal time, H is hour, M is minute, S is second
 -----------------------------------------------------------------------------
 module Main where
 
@@ -25,8 +28,7 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
--- | Type alias's created to help with the abstraction of concrete types to what
--- we are producing with our pure functions and type safety.
+-- | Decimal time types
 newtype Seconds = Seconds Double
     deriving (Eq, Ord, Num, Fractional, Real, RealFrac)
 
@@ -48,9 +50,6 @@ mkVDT dt@(DecimalTime t)
     | otherwise = Left "Time must be between 0 and 1000"
 
 -- | Pure functions used to calculate the decimal time from Data.Time.getZonedTime
---
--- D = |1000 - (1000 * (H * 3600 + M * 60 + S) / 86400)|
--- Where D is decimal time, H is hour, M is minute, S is second
 --
 -- prop> sec (TimeOfDay 0 0 0) == 0.0 
 -- prop> sec (TimeOfDay 1 0 0) == 3600.0 
@@ -97,8 +96,6 @@ zone = construct $ do
   yield zt
 
 -- | Format the output of the validation
--- We will either output an error message if decimal time failed validation or we will unwrap
--- and pack our decimal time to be displayed.
 --
 -- prop> fmt (Right $ ValidDecimalTime (DecimalTime 1000)) == "Decimal time: NEW"
 -- prop> fmt (Right $ ValidDecimalTime (DecimalTime 500)) == "Decimal time: 500"
@@ -116,11 +113,6 @@ fmt = ("Decimal time: " <>) . either T.pack (fd . unVDT)
 result :: ProcessT IO T.Text ()
 result = construct $ await >>= liftIO . TIO.putStrLn
 
--- | The process used below to calculate decimal minutes from the system clock utilizes the machines
--- package to construct a compositional monadic pipeline. A simple way to integrate monadic processing
--- of pure functions with IO.
---
--- Run the machine and transform the data
 main :: IO ()
 main =
   runT_ $
