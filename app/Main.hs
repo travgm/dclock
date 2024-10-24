@@ -30,24 +30,24 @@ import qualified Data.Text.IO as TIO
 
 -- | Decimal time types
 newtype Seconds = Seconds Double
-    deriving (Eq, Ord, Num, Fractional, Real, RealFrac)
+  deriving (Eq, Ord, Num, Fractional, Real, RealFrac)
 
 newtype Days = Days Double
-    deriving (Eq, Ord, Num, Fractional, Real, RealFrac)
+  deriving (Eq, Ord, Num, Fractional, Real, RealFrac)
 
 newtype DecimalTime = DecimalTime Int
-    deriving (Eq, Show, Ord, Num, Enum, Real, Integral)
+  deriving (Eq, Show, Ord, Num, Enum, Real, Integral)
 
 -- | Validation for our decimal time values
-newtype ValidDecimalTime = ValidDecimalTime 
-    { unVDT:: DecimalTime }
-    deriving (Show, Eq)
+newtype ValidDecimalTime = ValidDecimalTime
+  {unVDT :: DecimalTime}
+  deriving (Show, Eq)
 
-{-# INLINABLE mkVDT #-}
+{-# INLINEABLE mkVDT #-}
 mkVDT :: DecimalTime -> Either String ValidDecimalTime
 mkVDT dt@(DecimalTime t)
-    | t >= 0 && t <= 1000 = Right $ ValidDecimalTime dt
-    | otherwise = Left "Time must be between 0 and 1000"
+  | t >= 0 && t <= 1000 = Right $ ValidDecimalTime dt
+  | otherwise = Left "Time must be between 0 and 1000"
 
 -- | Pure functions used to calculate the decimal time from Data.Time.getZonedTime
 --
@@ -89,7 +89,7 @@ dec = mkVDT . DecimalTime . d
 loc :: ZonedTime -> TimeOfDay
 loc = localTimeOfDay . zonedTimeToLocalTime
 
--- | Retrieve initial time and create our process (producer
+-- | Retrieve initial time and create our process (producer)
 zone :: ProcessT IO k ZonedTime
 zone = construct $ do
   zt <- liftIO getZonedTime
