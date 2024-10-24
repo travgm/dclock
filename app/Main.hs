@@ -67,6 +67,13 @@ frac = Days . (/ secd) . (\(Seconds s) -> s) . sec
     secd = 24 * 60 * 60
     {-# INLINE secd #-}
 
+-- | Validate the DecimalTime calculated
+{-# INLINEABLE mkVDT #-}
+mkVDT :: DecimalTime -> Either String ValidDecimalTime
+mkVDT dt@(DecimalTime t)
+  | t >= 0 && t <= 1000 = Right $ ValidDecimalTime dt
+  | otherwise = Left "Time must be between 0 and 1000"
+
 -- | Convert fraction of day to decimal time
 --
 -- prop> dec (TimeOfDay 0 0 0) == 1000
@@ -78,13 +85,6 @@ dec = mkVDT . DecimalTime . d
   where
     d = round . (1000 -) . (* 1000) . frac
     {-# INLINE d #-}
-
--- | Validate the DecimalTime calculated
-{-# INLINEABLE mkVDT #-}
-mkVDT :: DecimalTime -> Either String ValidDecimalTime
-mkVDT dt@(DecimalTime t)
-  | t >= 0 && t <= 1000 = Right $ ValidDecimalTime dt
-  | otherwise = Left "Time must be between 0 and 1000"
 
 -- | Transform zoned time to local time
 loc :: ZonedTime -> TimeOfDay
