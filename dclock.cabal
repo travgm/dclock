@@ -10,6 +10,8 @@ build-type:         Simple
 synopsis:           dclock
 description:        A simple decimal clock that maps your day to usable decimal minutes        
 extra-doc-files:    CHANGELOG.md
+category:           Time
+stability:          experimental
 
 common warnings
     ghc-options: -Wall -fwarn-tabs -O2

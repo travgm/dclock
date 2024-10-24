@@ -7,7 +7,7 @@
 -- Copyright   :  (c) Travis Montoya 2024
 -- License     :  MIT
 -- Maintainer  :  trav@hexproof.sh
--- Stability   :  stable
+-- Stability   :  experimental
 --
 -- Convert time from the systems monotonic clock to decimal time. Viewing the
 -- day with usable time left we use 1000 as a number counting down from
