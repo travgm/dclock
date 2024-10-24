@@ -16,7 +16,7 @@
 -- This is an implementation of the Calculateur concept originally written
 -- for the Watchy https://git.sr.ht/~jochen/Calculateur
 --
---
+-- Formula:
 -- D = |1000 - (1000 * (H * 3600 + M * 60 + S) / 86400)|
 -- Where D is decimal time, H is hour, M is minute, S is second
 -----------------------------------------------------------------------------
