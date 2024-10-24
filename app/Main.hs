@@ -43,12 +43,6 @@ newtype ValidDecimalTime = ValidDecimalTime
   {unVDT :: DecimalTime}
   deriving (Show, Eq)
 
-{-# INLINEABLE mkVDT #-}
-mkVDT :: DecimalTime -> Either String ValidDecimalTime
-mkVDT dt@(DecimalTime t)
-  | t >= 0 && t <= 1000 = Right $ ValidDecimalTime dt
-  | otherwise = Left "Time must be between 0 and 1000"
-
 -- | Pure functions used to calculate the decimal time from Data.Time.getZonedTime
 --
 -- prop> sec (TimeOfDay 0 0 0) == 0.0 
@@ -84,6 +78,13 @@ dec = mkVDT . DecimalTime . d
   where
     d = round . (1000 -) . (* 1000) . frac
     {-# INLINE d #-}
+
+-- | Validate the DecimalTime calculated
+{-# INLINEABLE mkVDT #-}
+mkVDT :: DecimalTime -> Either String ValidDecimalTime
+mkVDT dt@(DecimalTime t)
+  | t >= 0 && t <= 1000 = Right $ ValidDecimalTime dt
+  | otherwise = Left "Time must be between 0 and 1000"
 
 -- | Transform zoned time to local time
 loc :: ZonedTime -> TimeOfDay
