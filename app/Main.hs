@@ -114,9 +114,7 @@ fmt = ("Decimal time: " <>) . either T.pack (fd . unVDT)
 
 -- | Output the valid decimal time (consumer)
 result :: ProcessT IO T.Text ()
-result = construct $ do
-  text <- await
-  liftIO $ TIO.putStrLn text
+result = construct $ await >>= liftIO . TIO.putStrLn
 
 -- | The process used below to calculate decimal minutes from the system clock utilizes the machines
 -- package to construct a compositional monadic pipeline. A simple way to integrate monadic processing
