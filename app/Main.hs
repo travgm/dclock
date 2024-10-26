@@ -22,9 +22,9 @@
 -----------------------------------------------------------------------------
 module Main where
 
-import System.Environment(getArgs)
 import Data.Time
 import Data.Machine
+import System.Environment(getArgs)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
