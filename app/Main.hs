@@ -22,11 +22,20 @@
 -----------------------------------------------------------------------------
 module Main where
 
+import System.Environment(getArgs)
 import Data.Time
 import Data.Machine
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+
+version :: String
+version = unlines
+    [ "dclock v1.0.0"
+    , "Decimal time clock that maps your day to 1000 decimal minutes"
+    , "Written by Travis Montoya (2024)"
+    ]
+{-# INLINE version #-}
 
 -- | Decimal time types
 newtype Seconds = Seconds Double
@@ -107,18 +116,28 @@ fmt :: Either String ValidDecimalTime -> T.Text
 fmt = ("Decimal time: " <>) . either T.pack (fd . unVDT)
   where
     fd = \case
-      DecimalTime 1000 -> "NEW"
+      DecimalTime 0 -> "NEW"
       DecimalTime t -> T.pack . show $ t
 
 -- | Output the valid decimal time (consumer)
 result :: ProcessT IO T.Text ()
 result = construct $ await >>= liftIO . TIO.putStrLn
 
+-- | Process args and either exit or continue with running the machine
+{-# INLINE runD #-}
+runD :: [String] -> IO ()
+runD = \case
+    ["-v"] -> putStrLn version
+    []     -> runClock                     
+    _      -> putStrLn "Valid argument is: -v"
+  where
+    runClock = runT_ $
+        zone
+        ~> mapping loc
+        ~> mapping dec
+        ~> mapping fmt
+        ~> result
+    {-# INLINE runClock #-}
+
 main :: IO ()
-main =
-  runT_ $
-    zone
-      ~> mapping loc
-      ~> mapping dec
-      ~> mapping fmt
-      ~> result
+main = getArgs >>= runD
