@@ -30,10 +30,11 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
 version :: String
-version = unlines
-    [ "dclock v1.0.0"
-    , "Decimal time clock that maps your day to 1000 decimal minutes"
-    , "Written by Travis Montoya (2024)"
+version =
+  unlines
+    [ "dclock v1.0.0",
+      "Decimal time clock that maps your day to 1000 decimal minutes",
+      "Written by Travis Montoya (2024)"
     ]
 {-# INLINE version #-}
 
