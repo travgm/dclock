@@ -128,7 +128,7 @@ version =
       <> "version 1.0.0 "
       <> platform
 
--- | If any other command line argument other than -v is given we show the only valid command is -v
+-- | If any other command line argument other than -v or --version is given we show help
 validArgs :: IO ()
 validArgs = TIO.putStrLn "Valid arguments are: -v, --version"
 
