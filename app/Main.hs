@@ -29,15 +29,6 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
-version :: String
-version =
-  unlines
-    [ "dclock v1.0.0",
-      "Decimal time clock that maps your day to 1000 decimal minutes",
-      "Written by Travis Montoya (2024)"
-    ]
-{-# INLINE version #-}
-
 -- | Decimal time types
 newtype Seconds = Seconds Double
   deriving (Eq, Ord, Num, Fractional, Real, RealFrac)
@@ -124,13 +115,29 @@ fmt = ("Decimal time: " <>) . either T.pack (fd . unVDT)
 result :: ProcessT IO T.Text ()
 result = construct $ await >>= liftIO . TIO.putStrLn
 
--- | Process args and either exit or continue with running the machine
+-- | Show version information if the user types -v
+{-# INLINE version #-}
+version :: IO ()
+version = TIO.putStrLn . T.unlines $ versionLines
+  where
+    versionLines =
+      [ "dclock v1.0.0\n",
+        "Decimal time clock that maps your day to 1000 decimal minutes\n",
+        "Written by Travis Montoya (2024)"
+      ]
+
+-- | If any other command line argument other than -v is given we show the only valid command is -v
+{-# INLINE validArgs #-}
+validArgs :: IO ()
+validArgs = TIO.putStrLn "Valid argument is: -v"
+
+-- | Process args or continue with running the machine
 {-# INLINE runD #-}
 runD :: [String] -> IO ()
 runD = \case
-  ["-v"] -> putStrLn version
+  ["-v"] -> version
   [] -> runClock
-  _ -> putStrLn "Valid argument is: -v"
+  _ -> validArgs
   where
     runClock =
       runT_ $
