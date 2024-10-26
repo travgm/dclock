@@ -21,10 +21,7 @@ or if you have copied the "dclock" executable to a bin directory
 $ dclock
 Decimal time: 999
 $ dclock -v
-dclock v1.0.0
-Decimal time clock that maps your day to 1000 decimal minutes
-Written by Travis Montoya (2024)
-
+Decimal time clock that maps your day to 1000 decimal minutes, version 1.0.0 (x86_64-linux)
 $
 ```
 

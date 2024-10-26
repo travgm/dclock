@@ -2,6 +2,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE PatternSynonyms #-}
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (c) Travis Montoya 2024
@@ -24,6 +25,7 @@ module Main where
 
 import Data.Time
 import Data.Machine
+import System.Info
 import System.Environment(getArgs)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
@@ -36,7 +38,7 @@ newtype Seconds = Seconds Double
 newtype Days = Days Double
   deriving (Eq, Ord, Num, Fractional, Real, RealFrac)
 
-newtype DecimalTime = DecimalTime Int
+newtype DecimalTime = DecimalTime Integer
   deriving (Eq, Show, Ord, Num, Enum, Real, Integral)
 
 -- | Validation for our decimal time values
@@ -115,27 +117,28 @@ fmt = ("Decimal time: " <>) . either T.pack (fd . unVDT)
 result :: ProcessT IO T.Text ()
 result = construct $ await >>= liftIO . TIO.putStrLn
 
+-- | Get platform information for version string
+platform :: T.Text
+platform = "(" <> T.pack arch <> "-" <> T.pack os <> ")"
+
 -- | Show version information if the user types -v
-{-# INLINE version #-}
 version :: IO ()
-version = TIO.putStrLn . T.unlines $ versionLines
-  where
-    versionLines =
-      [ "dclock v1.0.0\n",
-        "Decimal time clock that maps your day to 1000 decimal minutes\n",
-        "Written by Travis Montoya (2024)"
-      ]
+version =
+  TIO.putStrLn $
+    "Decimal time clock that maps your day to 1000 decimal minutes, "
+      <> "version 1.0.0 "
+      <> platform
 
 -- | If any other command line argument other than -v is given we show the only valid command is -v
-{-# INLINE validArgs #-}
 validArgs :: IO ()
-validArgs = TIO.putStrLn "Valid argument is: -v"
+validArgs = TIO.putStrLn "Valid arguments are: -v, --version"
 
 -- | Process args or continue with running the machine
 {-# INLINE runD #-}
 runD :: [String] -> IO ()
 runD = \case
   ["-v"] -> version
+  ["--version"] -> version
   [] -> runClock
   _ -> validArgs
   where
