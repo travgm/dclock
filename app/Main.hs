@@ -127,16 +127,17 @@ result = construct $ await >>= liftIO . TIO.putStrLn
 {-# INLINE runD #-}
 runD :: [String] -> IO ()
 runD = \case
-    ["-v"] -> putStrLn version
-    []     -> runClock                     
-    _      -> putStrLn "Valid argument is: -v"
+  ["-v"] -> putStrLn version
+  [] -> runClock
+  _ -> putStrLn "Valid argument is: -v"
   where
-    runClock = runT_ $
+    runClock =
+      runT_ $
         zone
-        ~> mapping loc
-        ~> mapping dec
-        ~> mapping fmt
-        ~> result
+          ~> mapping loc
+          ~> mapping dec
+          ~> mapping fmt
+          ~> result
     {-# INLINE runClock #-}
 
 main :: IO ()
