@@ -24,7 +24,7 @@ module Main where
 
 import Data.Time
 import Data.Machine
-import System.Info
+import System.Info ( arch, os )
 import System.Environment(getArgs)
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
