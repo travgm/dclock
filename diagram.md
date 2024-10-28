@@ -1,8 +1,12 @@
 ```mermaid
 
 stateDiagram-v2
-    [*] --> zone
-    zone --> loc
+    [*] --> getArgs
+    getArgs --> runD
+    runD --> version
+    runD --> validArgs
+    runD --> runClock
+    runClock --> loc
     loc --> dec
     dec --> frac
     frac --> sec
