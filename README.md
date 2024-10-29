@@ -31,4 +31,4 @@ MIT
 
 Author
 ======
-Travis Montoya trav@hexproof.sh
+Travis Montoya <trav@hexproof.sh>
