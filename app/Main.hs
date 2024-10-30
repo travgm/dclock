@@ -136,9 +136,9 @@ validArgs = TIO.putStrLn "Valid arguments are: -v, --version"
 {-# INLINE runD #-}
 runD :: [String] -> IO ()
 runD = \case
+  [] -> runClock
   ["-v"] -> version
   ["--version"] -> version
-  [] -> runClock
   _ -> validArgs
   where
     runClock =
