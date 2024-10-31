@@ -2,6 +2,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RankNTypes #-}
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (c) Travis Montoya 2024
@@ -23,10 +24,16 @@
 module Main where
 
 import Data.Time
-import Data.Machine
+    ( getZonedTime,
+      LocalTime(localTimeOfDay),
+      TimeOfDay(TimeOfDay),
+      ZonedTime(zonedTimeToLocalTime) )
+import qualified Data.Time.Format as Time
+import Data.Machine as M
 import System.Info ( arch, os )
 import System.Environment(getArgs)
 import Control.Monad.IO.Class (liftIO)
+import Control.Lens ((^.), (.~), (&))
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -44,6 +51,24 @@ newtype DecimalTime = DecimalTime Integer
 newtype ValidDecimalTime = ValidDecimalTime
   {unVDT :: DecimalTime}
   deriving (Show, Eq)
+
+data ClockState = ClockState
+  { _extendedFlag :: Bool,
+    _decimalTime  :: ValidDecimalTime,
+    _currentDate  :: LocalTime
+  }
+
+type Lens s t a b = forall f. Functor f => (a -> f b) -> s -> f t
+type Lens'' s a = Lens s s a a
+
+extendedFlag :: Lens'' ClockState Bool
+extendedFlag k (ClockState e d c) = (\e' -> ClockState e' d c) <$> k e
+
+decimalTime :: Lens'' ClockState ValidDecimalTime
+decimalTime k (ClockState e d c) = (\d' -> ClockState e d' c) <$> k d
+
+currentDate :: Lens'' ClockState LocalTime
+currentDate k (ClockState e d c) = (\c' -> ClockState e d c') <$> k c
 
 -- | Pure functions used to calculate the decimal time from Data.Time.getZonedTime
 --
@@ -82,15 +107,30 @@ mkVDT dt@(DecimalTime t)
 -- prop> dec (TimeOfDay 12 0 0) == 500
 -- prop> dec (TimeOfDay 16 0 0) == 333
 {-# INLINE dec #-}
-dec :: TimeOfDay -> Either String ValidDecimalTime
-dec = mkVDT . DecimalTime . d
+dec :: ClockState -> Either String ClockState
+dec s = case mkDecTime s of
+    Right vdt -> Right $ s & decimalTime .~ vdt
+    Left err -> Left err
   where
-    d = round . (1000 -) . (* 1000) . frac
-    {-# INLINE d #-}
+    {-# INLINE rdTod #-}
+    rdTod :: ClockState -> TimeOfDay
+    rdTod st = localTimeOfDay $ st ^. currentDate
+
+    {-# INLINE toDecMins #-}
+    toDecMins :: TimeOfDay -> DecimalTime
+    toDecMins = DecimalTime . decTime . frac
+
+    {-# INLINE decTime #-}
+    decTime :: Days -> Integer
+    decTime = round . (1000 -) . (* 1000)
+
+    {-# INLINE mkDecTime #-}
+    mkDecTime :: ClockState -> Either String ValidDecimalTime
+    mkDecTime = mkVDT . toDecMins . rdTod
 
 -- | Transform zoned time to local time
-loc :: ZonedTime -> TimeOfDay
-loc = localTimeOfDay . zonedTimeToLocalTime
+loc :: ZonedTime -> ClockState -> ClockState
+loc zt state = state & currentDate .~ zonedTimeToLocalTime zt
 
 -- | Retrieve initial time and create our process (producer)
 zone :: ProcessT IO k ZonedTime
@@ -105,12 +145,26 @@ zone = construct $ do
 -- prop> fmt (Right $ ValidDecimalTime (DecimalTime 333)) == "Decimal time: 333"
 -- prop> fmt (Left "Time must be between 0 and 1000") == "Decimal time: Time must be between 0 and 1000"
 {-# INLINE fmt #-}
-fmt :: Either String ValidDecimalTime -> T.Text
-fmt = ("Decimal time: " <>) . either T.pack (fd . unVDT)
+fmt :: Either String ClockState -> T.Text
+fmt = \case
+    Left err -> "Decimal time: " <> T.pack err
+    Right state -> formatTime state
   where
-    fd = \case
-      DecimalTime 0 -> "NEW"
-      DecimalTime t -> T.pack . show $ t
+    {-# INLINE formatTime #-}
+    formatTime :: ClockState -> T.Text
+    formatTime s = "Decimal time: " <> case s ^. decimalTime of
+        ValidDecimalTime (DecimalTime 0) -> "NEW" <> extendedInfo s
+        ValidDecimalTime (DecimalTime t) -> T.pack (show t) <> extendedInfo s
+
+    {-# INLINE extendedInfo #-}
+    extendedInfo :: ClockState -> T.Text
+    extendedInfo s = if s ^. extendedFlag
+        then " (" <> T.pack (fmtTime $ s ^. currentDate) <> ")"
+        else ""
+
+    {-# INLINE fmtTime #-}
+    fmtTime :: LocalTime -> String
+    fmtTime = Time.formatTime Time.defaultTimeLocale "%Y-%m-%d"
 
 -- | Output the valid decimal time (consumer)
 result :: ProcessT IO T.Text ()
@@ -130,25 +184,26 @@ version =
 
 -- | If any other command line argument other than -v or --version is given we show help
 validArgs :: IO ()
-validArgs = TIO.putStrLn "Valid arguments are: -v, --version"
+validArgs = TIO.putStrLn "Valid arguments are: -e, -v, --version"
 
 -- | Process args or continue with running the machine
 {-# INLINE runD #-}
 runD :: [String] -> IO ()
 runD = \case
-  [] -> runClock
-  ["-v"] -> version
+  []            -> runClock False
+  ["-e"]        -> runClock True
+  ["-v"]        -> version
   ["--version"] -> version
-  _ -> validArgs
+  _             -> validArgs
   where
-    runClock =
+    runClock e = do
+      let i = ClockState e undefined undefined
       runT_ $
         zone
-          ~> mapping loc
-          ~> mapping dec
-          ~> mapping fmt
+          ~> M.mapping (`loc` i)
+          ~> M.mapping dec
+          ~> M.mapping fmt
           ~> result
-    {-# INLINE runClock #-}
 
 main :: IO ()
 main = getArgs >>= runD
