@@ -20,17 +20,28 @@ source-repository    head
 common warnings
     ghc-options: -Wall -fwarn-tabs -O2
 
+library
+   hs-source-dirs:     Lib
+   exposed-modules:    DecimalTime,
+                       PrettyPrinter,
+                       Types
+   build-depends:      base ^>=4.17.2.1,
+                       machines ^>= 0.7.2,
+                       time ^>=1.14,
+                       lens ^>= 5.2.1,
+                       text ^>= 2.1.1,
+                       QuickCheck ^>= 2.14
+
+   default-language:    Haskell2010
+
 executable dclock
     import:           warnings
 
     main-is:          Main.hs
 
     build-depends:    base ^>=4.17.2.1,
-                      time ^>=1.14,
+                      dclock,
                       machines ^>= 0.7.2,
-                      lens ^>= 5.2.1,
                       text ^>= 2.1.1,
-                      QuickCheck ^>= 2.14
-
     hs-source-dirs:   app
     default-language: Haskell2010
