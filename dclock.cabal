@@ -8,10 +8,14 @@ maintainer:         trav@hexproof.sh
 homepage:           https://github.com/travgm/dclock
 build-type:         Simple
 synopsis:           dclock
-description:        A simple decimal clock that maps your day to 1000 decimal minutes        
+description:        A simple decimal clock that maps your day to 1000 decimal minutes
 extra-doc-files:    CHANGELOG.md
 category:           Time
 stability:          experimental
+
+source-repository    head
+  type:                git
+  location:            git@github.com:travgm/dclock.git
 
 common warnings
     ghc-options: -Wall -fwarn-tabs -O2
