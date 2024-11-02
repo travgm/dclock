@@ -25,23 +25,24 @@ import Data.Machine as M (
        (~>))
 import Data.Time (ZonedTime, getZonedTime)
 import Control.Monad.IO.Class (liftIO)
-import System.Info ( arch, os )
+import Control.Concurrent (threadDelay)
+import System.Info (arch, os)
 import System.Environment(getArgs)
+import Data.Function(fix)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import qualified PrettyPrinter as Pretty (formatTime)
+import qualified PrettyPrinter as Pretty (formatTime, displaySingleLine)
 import qualified DecimalTime as DT (
       localTimeToDecimal,
       updateCurrentDateWithZonedTime,
       ClockState(ClockState))
+import Types (Config(..), RunMode(SingleRun, Watch))
 
 -- | Get platform information for version string
-{-# INLINE createPlatformText #-}
 createPlatformText :: T.Text
 createPlatformText = "(" <> T.pack arch <> "-" <> T.pack os <> ")"
 
 -- | Show version information if the user types -v
-{-# INLINE displayVersionText #-}
 displayVersionText :: IO ()
 displayVersionText =
   TIO.putStrLn $
@@ -50,40 +51,50 @@ displayVersionText =
       <> createPlatformText
 
 -- | If any other command line argument other than -v or --version is given we show help
-{-# INLINE displayValidArgs #-}
 displayValidArgs :: IO ()
-displayValidArgs = TIO.putStrLn "Valid arguments are: -e, -v, --version"
+displayValidArgs = TIO.putStrLn "Valid arguments are: -e, -w, -v, --version"
 
 -- | Output the valid decimal time (consumer)
-{-# INLINE displayTimeText #-}
 displayTimeText :: ProcessT IO T.Text ()
-displayTimeText = construct $ await >>= liftIO . TIO.putStrLn
+displayTimeText = construct $ await >>= liftIO . Pretty.displaySingleLine
 
 -- | Retrieve initial time and create our process (producer)
-{-# INLINE zonedTime #-}
 zonedTime :: ProcessT IO k ZonedTime
 zonedTime = construct $ do
   zt <- liftIO getZonedTime
   yield zt
 
 -- | Process args or continue with running the machine
-{-# INLINE runClockProcess #-}
 runClockProcess :: [String] -> IO ()
 runClockProcess = \case
-  []            -> runClock False
-  ["-e"]        -> runClock True
-  ["-v"]        -> displayVersionText
-  ["--version"] -> displayVersionText
-  _             -> displayValidArgs
+    []            -> runWith $ Config False SingleRun
+    ["-e"]        -> runWith $ Config True SingleRun
+    ["-w"]        -> runWith $ Config False Watch
+    ["-w", "-e"]  -> runWith $ Config True Watch
+    ["-e", "-w"]  -> runWith $ Config True Watch
+    ["-v"]        -> displayVersionText
+    ["--version"] -> displayVersionText
+    _             -> displayValidArgs
   where
+    runWith :: Config -> IO ()
+    runWith config = case mode config of
+      SingleRun -> runClock (extended config) >> TIO.putStrLn ""
+      Watch     -> watchClock (extended config)
+
+    runClock :: Bool -> IO ()
     runClock e = do
-      let i = DT.ClockState e Nothing Nothing
+      let state = DT.ClockState e Nothing Nothing
       runT_ $
         zonedTime
-          ~> M.mapping (`DT.updateCurrentDateWithZonedTime` i)
+          ~> M.mapping (`DT.updateCurrentDateWithZonedTime` state)
           ~> M.mapping DT.localTimeToDecimal
           ~> M.mapping Pretty.formatTime
           ~> displayTimeText
+
+    watchClock :: Bool -> IO ()
+    watchClock extended' = 
+      TIO.putStrLn "Press Ctrl-C to exit" >>
+      fix (\loop -> runClock extended' >> threadDelay 1000000 >> loop)
 
 main :: IO ()
 main = getArgs >>= runClockProcess

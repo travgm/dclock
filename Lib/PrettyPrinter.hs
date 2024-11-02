@@ -15,6 +15,7 @@
 module PrettyPrinter (
       renderTimeText
     , formatTime
+    , displaySingleLine
 ) where
 
 import Types
@@ -27,6 +28,8 @@ import Types
 import Data.Time (LocalTime)
 import Control.Lens ((^.))
 import Control.Monad.IO.Class (liftIO)
+import System.Console.ANSI (clearLine, setCursorColumn)
+import System.IO (hFlush, stdout)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Time.Format as Time
@@ -65,3 +68,11 @@ formatTime = \case
     {-# INLINE fmtTime #-}
     fmtTime :: LocalTime -> String
     fmtTime = Time.formatTime Time.defaultTimeLocale "%Y-%m-%d"
+
+-- | Used when we are in WatchClock to update the same line
+displaySingleLine :: T.Text -> IO ()
+displaySingleLine s = do
+  clearLine
+  setCursorColumn 0
+  TIO.putStr s
+  hFlush stdout
