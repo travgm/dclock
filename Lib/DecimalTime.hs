@@ -83,15 +83,16 @@ mkValidDecimalTime dt@(DecimalTime t)
 -- prop> dec (TimeOfDay 16 0 0) == 333
 {-# INLINE localTimeToDecimal #-}
 localTimeToDecimal :: ClockState -> Either String ClockState
-localTimeToDecimal s = case mkDecimalTime s of
-    Right vdt -> Right $ s & (decimalTime ?~ vdt)
-    Left err -> Left err
+localTimeToDecimal s = do
+    tod <- readTimeOfDay s                
+    vdt <- mkValidDecimalTime (toDecimalMinutes tod)
+    return $ s & (decimalTime ?~ vdt)
   where
     {-# INLINE readTimeOfDay #-}
-    readTimeOfDay :: ClockState -> TimeOfDay
+    readTimeOfDay :: ClockState -> Either String TimeOfDay
     readTimeOfDay td = case td ^. currentDate of
-        Just lt -> localTimeOfDay lt
-        Nothing -> error "Current date is not set"
+        Just lt -> Right $ localTimeOfDay lt
+        Nothing -> Left "Current date is not set"
 
     {-# INLINE toDecimalMinutes #-}
     toDecimalMinutes :: TimeOfDay -> DecimalTime
@@ -100,10 +101,6 @@ localTimeToDecimal s = case mkDecimalTime s of
     {-# INLINE decimalMinutes #-}
     decimalMinutes :: Days -> Integer
     decimalMinutes = round . (1000 -) . (* 1000)
-
-    {-# INLINE mkDecimalTime #-}
-    mkDecimalTime :: ClockState -> Either String ValidDecimalTime
-    mkDecimalTime = mkValidDecimalTime . toDecimalMinutes . readTimeOfDay
 
 -- | Transform zoned time to local time
 updateCurrentDateWithZonedTime :: ZonedTime -> ClockState -> ClockState
