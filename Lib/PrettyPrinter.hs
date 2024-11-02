@@ -15,7 +15,6 @@
 module PrettyPrinter (
       renderTimeText
     , formatTime
-    , fmtTime
 ) where
 
 import Types
@@ -27,7 +26,6 @@ import Types
     decimalTime)
 import Data.Time (LocalTime)
 import Control.Lens ((^.))
-import Data.Machine as M ( ProcessT, construct, await )
 import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -40,10 +38,6 @@ renderTimeText s e =
     Just (ValidDecimalTime (DecimalTime 0)) -> "NEW" <> e
     Just (ValidDecimalTime (DecimalTime t)) -> T.pack (show t) <> e
     Nothing -> "Invalid time"
-
-{-# INLINE fmtTime #-}
-fmtTime :: LocalTime -> String
-fmtTime = Time.formatTime Time.defaultTimeLocale "%Y-%m-%d"
 
 -- | Format the output of the validation
 --
@@ -67,3 +61,7 @@ formatTime = \case
               Nothing -> ""
           )
         else ""
+
+    {-# INLINE fmtTime #-}
+    fmtTime :: LocalTime -> String
+    fmtTime = Time.formatTime Time.defaultTimeLocale "%Y-%m-%d"
