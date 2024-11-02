@@ -10,7 +10,7 @@ Here is a blog post on the creation and explanation of it: [dclock in haskell](h
 Usage
 =====
 
-You can type -v or --version to see program information or -e to print extended information which is the current date.
+You can type -v or --version to see program information or -e to print extended information which is the current date. If you want to leave it running for a realtime decimal clock use the -w option.
 
 ```
 $ cabal run
