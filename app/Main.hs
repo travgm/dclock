@@ -93,7 +93,7 @@ runClockProcess = \case
 
     watchClock :: Bool -> IO ()
     watchClock extended' = 
-      TIO.putStrLn "Press Ctrl-C to exit" >>
+      TIO.putStrLn "Press Ctrl-C to exit\n" >>
       fix (\loop -> runClock extended' >> threadDelay 1000000 >> loop)
 
 main :: IO ()
