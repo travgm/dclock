@@ -15,12 +15,18 @@
 -----------------------------------------------------------------------------
 module Main where
 
-import Data.Machine as M
+import DecimalTime ( 
+      displayTimeText,
+      formatTime,
+      localTimeToDecimal,
+      updateCurrentDateWithZonedTime,
+      zonedTime,
+      ClockState(ClockState))
+import Data.Machine as M ( runT_, (~>), mapping )
 import System.Info ( arch, os )
 import System.Environment(getArgs)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import DecimalTime
 
 -- | Get platform information for version string
 createPlatformText :: T.Text
@@ -49,13 +55,13 @@ runClockProcess = \case
   _             -> displayValidArgs
   where
     runClock e = do
-      let i = ClockState e Nothing Nothing
+      let i = DecimalTime.ClockState e Nothing Nothing
       runT_ $
-        zonedTime
-          ~> M.mapping (`updateCurrentDateWithZonedTime` i)
-          ~> M.mapping localTimeToDecimal
-          ~> M.mapping formatTime
-          ~> displayTimeText
+        DecimalTime.zonedTime
+          ~> M.mapping (`DecimalTime.updateCurrentDateWithZonedTime` i)
+          ~> M.mapping DecimalTime.localTimeToDecimal
+          ~> M.mapping DecimalTime.formatTime
+          ~> DecimalTime.displayTimeText
 
 main :: IO ()
 main = getArgs >>= runClockProcess
