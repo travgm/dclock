@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (c) Travis Montoya 2024
@@ -13,6 +14,7 @@
 -----------------------------------------------------------------------------
 module PrettyPrinter (
       renderTimeText
+    , formatTime
     , fmtTime
 ) where
 
@@ -20,10 +22,15 @@ import Types
   ( ClockState (..),
     DecimalTime (..),
     ValidDecimalTime (..),
+    extendedFlag,
+    currentDate,
     decimalTime)
 import Data.Time (LocalTime)
 import Control.Lens ((^.))
+import Data.Machine as M ( ProcessT, construct, await )
+import Control.Monad.IO.Class (liftIO)
 import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 import qualified Data.Time.Format as Time
 
 {-# INLINE renderTimeText #-}
@@ -37,3 +44,26 @@ renderTimeText s e =
 {-# INLINE fmtTime #-}
 fmtTime :: LocalTime -> String
 fmtTime = Time.formatTime Time.defaultTimeLocale "%Y-%m-%d"
+
+-- | Format the output of the validation
+--
+-- prop> fmt (Right $ ValidDecimalTime (DecimalTime 1000)) == "Decimal time: NEW"
+-- prop> fmt (Right $ ValidDecimalTime (DecimalTime 500)) == "Decimal time: 500"
+-- prop> fmt (Right $ ValidDecimalTime (DecimalTime 333)) == "Decimal time: 333"
+-- prop> fmt (Left "Time must be between 0 and 1000") == "Decimal time: Time must be between 0 and 1000"
+{-# INLINE formatTime #-}
+formatTime :: Either String ClockState -> T.Text
+formatTime = \case
+    Left err -> "Decimal time: " <> T.pack err
+    Right state -> renderTimeText state $ extendedInfo state
+  where
+    {-# INLINE extendedInfo #-}
+    extendedInfo :: ClockState -> T.Text
+    extendedInfo s =
+      if s ^. extendedFlag
+        then
+          ( case s ^. currentDate of
+              Just date -> " (" <> T.pack (fmtTime date) <> ")"
+              Nothing -> ""
+          )
+        else ""

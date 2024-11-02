@@ -41,6 +41,7 @@ executable dclock
 
     build-depends:    base ^>=4.17.2.1,
                       dclock,
+                      time ^>=1.14,
                       machines ^>= 0.7.2,
                       text ^>= 2.1.1,
     hs-source-dirs:   app
