@@ -1,4 +1,4 @@
-![dclock workflow](https://github.com/travgm/dclock/actions/workflows/haskell.yml/badge.svg)
+![dclock workflow](https://github.com/travgm/dclock/actions/workflows/ci.yml/badge.svg)
 
 dclock
 ======
