@@ -14,6 +14,21 @@ instance Arbitrary TimeOfDay where
       <*> choose (0, 59)
       <*> (fromInteger <$> choose (0, 59))
 
+instance Arbitrary TimeZone where
+  arbitrary = TimeZone <$> arbitrary <*> arbitrary <*> arbitrary
+
+instance Arbitrary Day where
+  arbitrary = ModifiedJulianDay <$> arbitrary
+
+instance Arbitrary LocalTime where
+  arbitrary = LocalTime <$> arbitrary <*> arbitrary
+
+instance Arbitrary ZonedTime where
+  arbitrary = do
+    timeZone <- arbitrary
+    localTime <- arbitrary
+    return $ ZonedTime localTime timeZone
+
 makeTestState :: TimeOfDay -> ClockState
 makeTestState tod =
   ClockState False Nothing (Just $ LocalTime (fromGregorian 2024 1 1) tod)
@@ -33,10 +48,16 @@ spec = do
         Right s -> s ^. decimalTime `shouldBe` Just (ValidDecimalTime (DecimalTime 500))
         Left err -> expectationFailure $ "Expected Right but got Left: " ++ err
 
+    it "converts teatime to 333" $ do
+      let state = makeTestState (TimeOfDay 16 0 0)
+      case localTimeToDecimal state of
+        Right s -> s ^. decimalTime `shouldBe` Just (ValidDecimalTime (DecimalTime 333))
+        Left err -> expectationFailure $ "Expected Right but got Left: " ++ err
+
     it "fails when currentDate is Nothing" $ do
       let state = ClockState False Nothing Nothing
       case localTimeToDecimal state of
-        Left _ -> return () 
+        Left _ -> return ()
         Right _ -> expectationFailure "Expected Left but got Right"
 
     it "always produces value between 0 and 1000" $ property $ \tod ->
@@ -53,3 +74,10 @@ spec = do
        in case localTimeToDecimal state of
             Right s -> s ^. extendedFlag == extended
             Left _ -> True
+
+  describe "updateCurrentDateWithZonedTime returns proper date" $ do
+    it "returns the date from the ZonedTime" $ property $ \tod zt ->
+      let state = makeTestState tod
+          localTime = zonedTimeToLocalTime zt
+          updatedState = updateCurrentDateWithZonedTime zt state
+       in updatedState ^. currentDate == Just localTime
