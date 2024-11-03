@@ -59,4 +59,5 @@ test-suite dclock-test
                     , QuickCheck
                     , hspec-discover
     other-modules:    DecimalTimeSpec
+    build-tool-depends: hspec-discover:hspec-discover
     default-language: Haskell2010
