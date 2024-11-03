@@ -1,4 +1,5 @@
 ![dclock workflow](https://github.com/travgm/dclock/actions/workflows/ci.yml/badge.svg)
+[![Release](https://img.shields.io/github/v/release/travgm/dclock.svg)](https://github.com/travgm/dclock/releases)
 
 dclock
 ======
