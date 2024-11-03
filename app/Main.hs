@@ -34,15 +34,18 @@ import qualified Data.Text.IO as TIO
 import qualified PrettyPrinter as Pretty (formatTime, displaySingleLine)
 import qualified DecimalTime as DT (
       localTimeToDecimal,
-      updateCurrentDateWithZonedTime,
-      ClockState(ClockState))
-import Types (Config(..), RunMode(SingleRun, Watch))
+      updateCurrentDateWithZonedTime)
+import Types (
+       ClockState( .. ), 
+       Config(..), 
+       RunMode(SingleRun, 
+       Watch))
 
 -- | Get platform information for version string
 createPlatformText :: T.Text
 createPlatformText = "(" <> T.pack arch <> "-" <> T.pack os <> ")"
 
--- | Show version information if the user types -v
+-- | Show version information if the user types -v or --version
 displayVersionText :: IO ()
 displayVersionText =
   TIO.putStrLn $
@@ -50,7 +53,8 @@ displayVersionText =
       <> "version 1.0.0 "
       <> createPlatformText
 
--- | If any other command line argument other than -v or --version is given we show help
+-- | If any other command line argument other than -v or --version, -e
+-- or -w is given we show help
 displayValidArgs :: IO ()
 displayValidArgs = TIO.putStrLn "Valid arguments are: -e, -w, -v, --version"
 
@@ -64,7 +68,7 @@ zonedTime = construct $ do
   zt <- liftIO getZonedTime
   yield zt
 
--- | Process args or continue with running the machine
+-- | Process args and run the clock
 runClockProcess :: [String] -> IO ()
 runClockProcess = \case
     []            -> runWith $ Config False SingleRun
@@ -83,7 +87,7 @@ runClockProcess = \case
 
     runClock :: Bool -> IO ()
     runClock e = do
-      let state = DT.ClockState e Nothing Nothing
+      let state = ClockState e Nothing Nothing
       runT_ $
         zonedTime
           ~> M.mapping (`DT.updateCurrentDateWithZonedTime` state)
