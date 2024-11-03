@@ -1,6 +1,8 @@
 dclock
 ======
 
+![haskell workflow](https://github.com/travgm/dclock/actions/workflows/haskell.yml/badge.svg)
+
 This was mostly created for my own edification. This takes a simple calculation converting system time 
 to usable decimal minutes left in the day. I wanted to utilize the machines package to create a nice 
 compositional monadic pipeline and learn some new concepts.
