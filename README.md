@@ -30,6 +30,14 @@ $ dclock -e
 Decimal time: 49 (2024-10-30)
 $
 ```
+Building
+========
+
+Run `cabal build` and it will download dependencies and build the project. You can install the executable with the command:
+
+```
+cabal install --installdir=/usr/local/bin --install-method=copy
+```
 
 License
 =======
