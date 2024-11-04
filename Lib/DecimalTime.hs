@@ -20,7 +20,7 @@
 -- Where D is decimal time, H is hour, M is minute, S is second
 -----------------------------------------------------------------------------
 module DecimalTime (
-      updateCurrentDateWithZonedTime
+      setCurrentDate
     , localTimeToDecimal
 ) where
 
@@ -102,6 +102,6 @@ localTimeToDecimal s = do
     decimalMinutes = round . (1000 -) . (* 1000)
 
 -- | Set the current date with the ZonedTime
-{-# INLINE updateCurrentDateWithZonedTime #-}
-updateCurrentDateWithZonedTime :: ZonedTime -> ClockState -> ClockState
-updateCurrentDateWithZonedTime zt state = state & (currentDate ?~ zonedTimeToLocalTime zt)
+{-# INLINE setCurrentDate #-}
+setCurrentDate :: ZonedTime -> ClockState -> ClockState
+setCurrentDate zt state = state & (currentDate ?~ zonedTimeToLocalTime zt)

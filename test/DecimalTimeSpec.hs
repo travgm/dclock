@@ -75,9 +75,9 @@ spec = do
             Right s -> s ^. extendedFlag == extended
             Left _ -> True
 
-  describe "updateCurrentDateWithZonedTime" $ do
+  describe "setCurrentDate" $ do
     it "verifies state _currentDate is set to LocalTime" $ property $ \tod zt ->
       let state = makeTestState tod
           localTime = zonedTimeToLocalTime zt
-          updatedState = updateCurrentDateWithZonedTime zt state
+          updatedState = setCurrentDate zt state
        in updatedState ^. currentDate == Just localTime

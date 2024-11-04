@@ -54,10 +54,12 @@ test-suite dclock-test
     build-depends:    base
                     , dclock
                     , time ^>=1.14
-                    , lens ^>= 5.2.1
+                    , lens ^>= 5.2.1 
+                    , text ^>= 2.1.1
                     , hspec
                     , QuickCheck
                     , hspec-discover
-    other-modules:    DecimalTimeSpec
+    other-modules:    DecimalTimeSpec,
+                      PrettyPrinterSpec
     build-tool-depends: hspec-discover:hspec-discover
     default-language: Haskell2010

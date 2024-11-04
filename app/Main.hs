@@ -34,7 +34,7 @@ import qualified Data.Text.IO as TIO
 import qualified PrettyPrinter as Pretty (formatTime, displaySingleLine)
 import qualified DecimalTime as DT (
       localTimeToDecimal,
-      updateCurrentDateWithZonedTime)
+      setCurrentDate)
 import Types (
        ClockState( .. ), 
        Config(..), 
@@ -90,7 +90,7 @@ runClockProcess = \case
       let state = ClockState e Nothing Nothing
       runT_ $
         zonedTime
-          ~> M.mapping (`DT.updateCurrentDateWithZonedTime` state)
+          ~> M.mapping (`DT.setCurrentDate` state)
           ~> M.mapping DT.localTimeToDecimal
           ~> M.mapping Pretty.formatTime
           ~> displayTimeText

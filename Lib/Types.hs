@@ -56,6 +56,7 @@ data ClockState = ClockState
     _decimalTime  :: Maybe ValidDecimalTime,
     _currentDate  :: Maybe LocalTime
   }
+  deriving (Eq, Show)
 
 type Lens s t a b = forall f. Functor f => (a -> f b) -> s -> f t
 type Lens'' s a = L.Lens s s a a
