@@ -16,6 +16,7 @@ module PrettyPrinter (
       renderTimeText
     , formatTime
     , displaySingleLine
+    , spinner
 ) where
 
 import Types
@@ -30,6 +31,7 @@ import Control.Lens ((^.))
 import Control.Monad.IO.Class (liftIO)
 import System.Console.ANSI (clearLine, setCursorColumn)
 import System.IO (hFlush, stdout)
+import Control.Concurrent (threadDelay)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Data.Time.Format as Time
@@ -73,6 +75,14 @@ formatTime = \case
 displaySingleLine :: T.Text -> IO ()
 displaySingleLine s = do
   clearLine
-  setCursorColumn 0
+  setCursorColumn 2
   TIO.putStr s
   hFlush stdout
+
+-- | Spinner for watch mode
+spinner :: IO ()
+spinner =
+  sequence_
+    [ putStr ('\r' : c : "") >> hFlush stdout >> threadDelay 250000
+      | c <- "-\\|/"
+    ]

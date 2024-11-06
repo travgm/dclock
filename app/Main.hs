@@ -15,22 +15,23 @@
 module Main where
 
 import Data.Machine as M (
-       ProcessT, 
-       await, 
-       construct, 
-       mapping, 
-       runT_, 
-       yield, 
+       ProcessT,
+       await,
+       construct,
+       mapping,
+       runT_,
+       yield,
        (~>))
+import System.Console.ANSI (hideCursor, showCursor)
+import Control.Exception (bracket_)
 import Data.Time (ZonedTime, getZonedTime)
 import Control.Monad.IO.Class (liftIO)
-import Control.Concurrent (threadDelay)
 import System.Info (arch, os)
 import Data.Function(fix)
 import Options.Applicative
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import qualified PrettyPrinter as Pretty (formatTime, displaySingleLine)
+import qualified PrettyPrinter as Pretty (formatTime, displaySingleLine, spinner)
 import qualified DecimalTime as DT (
       localTimeToDecimal,
       setCurrentDate)
@@ -51,29 +52,26 @@ data Command
 parser :: Parser Command
 parser = versionCmd <|> runCmd
   where
-    versionCmd =
-      flag'
+    versionCmd = flag'
         Version
         ( long "version"
             <> short 'v'
             <> help "Show version information"
         )
 
-    runCmd =
-      fmap Run $
-        Config
-          <$> switch
-            ( long "extended"
-                <> short 'e'
-                <> help "Show extended information including date"
-            )
-          <*> flag
-            SingleRun
-            Watch
-            ( long "watch"
-                <> short 'w'
-                <> help "Watch mode, view as a realtime decimal clock (updates every second)"
-            )
+    runCmd = fmap Run $
+        Config <$> switch
+        ( long "extended"
+            <> short 'e'
+            <> help "Show extended information including date"
+        )
+        <*> flag
+        SingleRun
+        Watch
+        ( long "watch"
+            <> short 'w'
+            <> help "Watch mode, view as a realtime decimal clock (updates every second)"
+        )
 
 -- | Get platform information for version string
 createPlatformText :: T.Text
@@ -105,14 +103,13 @@ zonedTime = construct $ do
 main :: IO ()
 main = execParser opts >>= run
   where
-    opts =
-      info
-        (parser <**> helper)
-        ( fullDesc
-            <> progDesc "Decimal time clock that maps your day to 1000 decimal minutes"
-            <> header "dclock - decimal time clock"
-        )
-   
+    opts = info
+      (parser <**> helper)
+      ( fullDesc
+          <> progDesc "Decimal time clock that maps your day to 1000 decimal minutes"
+          <> header "dclock - decimal time clock"
+      )
+
     run :: Command -> IO ()
     run Version = displayVersionText
     run (Run config) = runWith config
@@ -133,6 +130,6 @@ main = execParser opts >>= run
               ~> displayTimeText
 
         watchClock :: Bool -> IO ()
-        watchClock extended' = 
-          TIO.putStrLn "Press Ctrl-C to exit\n" >>
-          fix (\loop -> runClock extended' >> threadDelay 1000000 >> loop)
+        watchClock extended' = bracket_ hideCursor 
+          showCursor (TIO.putStrLn "Press Ctrl-C to exit\n" >>
+              fix (\loop -> runClock extended' >> Pretty.spinner >> loop))
