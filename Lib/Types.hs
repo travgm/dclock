@@ -23,12 +23,16 @@ module Types (
   , currentDate
   , Lens
   , Lens''
-  , RunMode(..)
-  , Config(..)
+  , (><)
 ) where
 
 import Data.Time (LocalTime)
 import qualified Control.Lens as L
+
+-- | Infix operator for range checking where lower bound is 0
+infixr 5 ><
+(><) :: Integer -> Integer -> Bool
+(><) x y = x >= 0 && x <= y
 
 -- | Decimal time types
 newtype Seconds = Seconds Double
@@ -43,13 +47,6 @@ newtype DecimalTime = DecimalTime Integer
 -- | Validation for our decimal time values
 newtype ValidDecimalTime = ValidDecimalTime DecimalTime
   deriving (Show, Eq)
-
-data RunMode = SingleRun | Watch
-
-data Config = Config
-    { extended :: Bool
-    , mode     :: RunMode
-    }
 
 data ClockState = ClockState
   { _extendedFlag :: Bool,

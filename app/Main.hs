@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
 -----------------------------------------------------------------------------
 -- |
@@ -27,19 +26,54 @@ import Data.Time (ZonedTime, getZonedTime)
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
 import System.Info (arch, os)
-import System.Environment(getArgs)
 import Data.Function(fix)
+import Options.Applicative
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified PrettyPrinter as Pretty (formatTime, displaySingleLine)
 import qualified DecimalTime as DT (
       localTimeToDecimal,
       setCurrentDate)
-import Types (
-       ClockState( .. ), 
-       Config(..), 
-       RunMode(SingleRun, 
-       Watch))
+import Types (ClockState( .. ))
+
+data RunMode = SingleRun | Watch
+
+data Config = Config
+    { extended :: Bool
+    , mode     :: RunMode
+    }
+
+data Command
+  = Version
+  | Run Config
+
+-- | Parser for command line arguments
+parser :: Parser Command
+parser = versionCmd <|> runCmd
+  where
+    versionCmd =
+      flag'
+        Version
+        ( long "version"
+            <> short 'v'
+            <> help "Show version information"
+        )
+
+    runCmd =
+      fmap Run $
+        Config
+          <$> switch
+            ( long "extended"
+                <> short 'e'
+                <> help "Show extended information including date"
+            )
+          <*> flag
+            SingleRun
+            Watch
+            ( long "watch"
+                <> short 'w'
+                <> help "Watch mode, view as a realtime decimal clock (updates every second)"
+            )
 
 -- | Get platform information for version string
 createPlatformText :: T.Text
@@ -68,37 +102,37 @@ zonedTime = construct $ do
   zt <- liftIO getZonedTime
   yield zt
 
--- | Process args and run the clock
-runClockProcess :: [String] -> IO ()
-runClockProcess = \case
-    []            -> runWith $ Config False SingleRun
-    ["-e"]        -> runWith $ Config True SingleRun
-    ["-w"]        -> runWith $ Config False Watch
-    ["-w", "-e"]  -> runWith $ Config True Watch
-    ["-e", "-w"]  -> runWith $ Config True Watch
-    ["-v"]        -> displayVersionText
-    ["--version"] -> displayVersionText
-    _             -> displayValidArgs
-  where
-    runWith :: Config -> IO ()
-    runWith config = case mode config of
-      SingleRun -> runClock (extended config) >> TIO.putStrLn ""
-      Watch     -> watchClock (extended config)
-
-    runClock :: Bool -> IO ()
-    runClock e = do
-      let state = ClockState e Nothing Nothing
-      runT_ $
-        zonedTime
-          ~> M.mapping (`DT.setCurrentDate` state)
-          ~> M.mapping DT.localTimeToDecimal
-          ~> M.mapping Pretty.formatTime
-          ~> displayTimeText
-
-    watchClock :: Bool -> IO ()
-    watchClock extended' = 
-      TIO.putStrLn "Press Ctrl-C to exit\n" >>
-      fix (\loop -> runClock extended' >> threadDelay 1000000 >> loop)
-
 main :: IO ()
-main = getArgs >>= runClockProcess
+main = execParser opts >>= run
+  where
+    opts =
+      info
+        (parser <**> helper)
+        ( fullDesc
+            <> progDesc "Decimal time clock that maps your day to 1000 decimal minutes"
+            <> header "dclock - decimal time clock"
+        )
+   
+    run :: Command -> IO ()
+    run Version = displayVersionText
+    run (Run config) = runWith config
+      where
+        runWith :: Config -> IO ()
+        runWith config' = case mode config' of
+          SingleRun -> runClock (extended config') >> TIO.putStrLn ""
+          Watch     -> watchClock (extended config')
+
+        runClock :: Bool -> IO ()
+        runClock e = do
+          let state = ClockState e Nothing Nothing
+          runT_ $
+            zonedTime
+              ~> M.mapping (`DT.setCurrentDate` state)
+              ~> M.mapping DT.localTimeToDecimal
+              ~> M.mapping Pretty.formatTime
+              ~> displayTimeText
+
+        watchClock :: Bool -> IO ()
+        watchClock extended' = 
+          TIO.putStrLn "Press Ctrl-C to exit\n" >>
+          fix (\loop -> runClock extended' >> threadDelay 1000000 >> loop)

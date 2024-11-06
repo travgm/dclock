@@ -14,19 +14,23 @@ Usage
 You can type -v or --version to see program information or -e to print extended information which is the current date. If you want to leave it running for a realtime decimal clock use the -w option.
 
 ```
-$ cabal run
-Decimal time: 292
-$ 
-```
-or if you have copied the "dclock" executable to a bin directory
+$ cabal run exe:dclock -- -h
+dclock - decimal time clock
 
-```
-$ dclock
-Decimal time: 999
-$ dclock -v
-Decimal time clock that maps your day to 1000 decimal minutes, version 1.0.0 (x86_64-linux)
-$ dclock -e
-Decimal time: 49 (2024-10-30)
+Usage: dclock [(-v|--version) | [-e|--extended] [-w|--watch]]
+
+  Decimal time clock that maps your day to 1000 decimal minutes
+
+Available options:
+  -v,--version             Show version information
+  -e,--extended            Show extended information including date
+  -w,--watch               Watch mode, view as a realtime decimal clock (updates
+                           every second)
+  -h,--help                Show this help text
+$ cabal run
+Decimal time: 25
+$ cabal run exe:dclock -- -e
+Decimal time: 25 (2024-11-05)
 $
 ```
 Building

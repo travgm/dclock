@@ -30,6 +30,7 @@ import Types
     DecimalTime (..),
     Seconds (..),
     ValidDecimalTime (..),
+    (><),
     currentDate,
     decimalTime,
     extendedFlag)
@@ -72,7 +73,7 @@ timeOfDayToFraction = Days . (/ secondsInDay) . (\(Seconds s) -> s) . timeOfDayT
 {-# INLINEABLE mkValidDecimalTime #-}
 mkValidDecimalTime :: DecimalTime -> Either String ValidDecimalTime
 mkValidDecimalTime dt@(DecimalTime t)
-  | t >= 0 && t <= 1000 = Right $ ValidDecimalTime dt
+  | t >< 1000 = Right $ ValidDecimalTime dt
   | otherwise = Left "Time must be between 0 and 1000"
 
 -- | Convert fraction of day to decimal time
