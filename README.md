@@ -42,6 +42,14 @@ Run `cabal build` and it will download dependencies and build the project. You c
 cabal install --installdir=/usr/local/bin --install-method=copy
 ```
 
+Then you can run it:
+```
+$ dclock
+Decimal time: 25
+$
+```
+
+
 License
 =======
 MIT
