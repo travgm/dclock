@@ -110,6 +110,8 @@ localTimeToDecimal s = do
 setCurrentDate :: ZonedTime -> ClockState -> ClockState
 setCurrentDate zt state = state & (currentDate ?~ zonedTimeToLocalTime zt)
 
+-- | Check if the alarm time has been reached
+{-# INLINE checkAlarmTime #-}
 checkAlarmTime :: ClockState -> Maybe DecimalTime
 checkAlarmTime s = do
   alarm <- s ^. alarmTime
@@ -118,6 +120,8 @@ checkAlarmTime s = do
     then Just decimal
     else Nothing
 
+-- | Check the status of the time
+{-# INLINE checkTimeStatus #-}
 checkTimeStatus :: Either String ClockState -> TimeStatus
 checkTimeStatus (Left err) = Error err
 checkTimeStatus (Right state) = case checkAlarmTime state of
