@@ -81,7 +81,7 @@ spec = do
     it "shows alarm when reached" $ do
         let state = makeClockState False Nothing (Just $ makeValidTime 500)
         Pretty.formatTime (AlarmReached (DecimalTime 500)) (Right state)
-            `shouldBe` "Decimal time: 500 ALARM!"
+            `shouldBe` "Decimal time: 500 ALARM!\BEL"
 
     it "always starts with 'Decimal time: '" $ property $ \state ->
         T.isPrefixOf "Decimal time: " (Pretty.formatTime Normal $ Right state)
