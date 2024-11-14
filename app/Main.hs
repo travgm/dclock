@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE LambdaCase #-}
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (c) Travis Montoya 2024
@@ -61,7 +60,6 @@ parser = versionCmd <|> runCmd
             <> short 'v'
             <> help "Show version information"
         )
-
 
 runCmd :: Parser Command
 runCmd =
