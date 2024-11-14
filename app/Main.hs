@@ -94,7 +94,7 @@ displayVersionText :: IO ()
 displayVersionText =
   TIO.putStrLn $
     "Decimal time clock that maps your day to 1000 decimal minutes, "
-      <> "version 1.0.0 "
+      <> "version 1.0.1 "
       <> createPlatformText
 
 -- | If any other command line argument other than -v or --version, -e
