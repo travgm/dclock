@@ -58,7 +58,7 @@ formatTime status state = case (status, state) of
   (Error err, _) ->
     "Decimal time: " <> T.pack err
   (AlarmReached _, Right s) ->
-    baseTimeText s <> " ALARM!"
+    baseTimeText s <> " ALARM!\BEL"
   (Normal, Right s) ->
     baseTimeText s
   (_, _) ->
