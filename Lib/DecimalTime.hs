@@ -22,6 +22,7 @@
 module DecimalTime (
       setCurrentDate
     , localTimeToDecimal
+    , checkTimeStatus
 ) where
 
 import Types
@@ -30,10 +31,12 @@ import Types
     DecimalTime (..),
     Seconds (..),
     ValidDecimalTime (..),
+    TimeStatus (..),
     (><),
     currentDate,
     decimalTime,
-    extendedFlag)
+    extendedFlag,
+    alarmTime)
 import Data.Time
   ( LocalTime (localTimeOfDay),
     TimeOfDay (TimeOfDay),
@@ -106,3 +109,19 @@ localTimeToDecimal s = do
 {-# INLINE setCurrentDate #-}
 setCurrentDate :: ZonedTime -> ClockState -> ClockState
 setCurrentDate zt state = state & (currentDate ?~ zonedTimeToLocalTime zt)
+
+checkAlarmTime :: ClockState -> Maybe DecimalTime
+checkAlarmTime s = do
+  alarm <- s ^. alarmTime
+  decimal <- s ^. decimalTime >>= return . unVDT
+  if alarm == decimal
+    then Just decimal
+    else Nothing
+
+checkTimeStatus :: Either String ClockState -> TimeStatus
+checkTimeStatus (Left err) = Error err
+checkTimeStatus (Right state) = case checkAlarmTime state of
+  Just t -> AlarmReached t
+  Nothing -> case state ^. decimalTime of
+    Just _ -> Normal
+    Nothing -> Error "Error reading Decimal Time"

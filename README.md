@@ -17,15 +17,16 @@ You can type -v or --version to see program information or -e to print extended 
 $ cabal run exe:dclock -- -h
 dclock - decimal time clock
 
-Usage: dclock [(-v|--version) | [-e|--extended] [-w|--watch]]
+Usage: dclock [(-v|--version) | [-e|--extended] [-w|--watch] [-a|--alarm TIME]]
 
   Decimal time clock that maps your day to 1000 decimal minutes
 
 Available options:
   -v,--version             Show version information
   -e,--extended            Show extended information including date
-  -w,--watch               Watch mode, view as a realtime decimal clock (updates
-                           every second)
+  -w,--watch               Watch mode
+  -a,--alarm TIME          Set alarm for decimal time (0-1000, only valid with
+                           watch mode)
   -h,--help                Show this help text
 $ cabal run
 Decimal time: 25

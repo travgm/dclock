@@ -23,9 +23,11 @@ import Types
   ( ClockState (..),
     DecimalTime (..),
     ValidDecimalTime (..),
+    TimeStatus (..),
     extendedFlag,
     currentDate,
-    decimalTime)
+    decimalTime,
+    alarmTime)
 import Data.Time (LocalTime)
 import Control.Lens ((^.))
 import Control.Monad.IO.Class (liftIO)
@@ -51,20 +53,26 @@ renderTimeText s e =
 -- prop> fmt (Right $ ValidDecimalTime (DecimalTime 333)) == "Decimal time: 333"
 -- prop> fmt (Left "Time must be between 0 and 1000") == "Decimal time: Time must be between 0 and 1000"
 {-# INLINE formatTime #-}
-formatTime :: Either String ClockState -> T.Text
-formatTime = \case
-    Left err -> "Decimal time: " <> T.pack err
-    Right state -> renderTimeText state $ extendedInfo state
+formatTime :: TimeStatus -> Either String ClockState -> T.Text
+formatTime status state = case (status, state) of
+  (Error err, _) ->
+    "Decimal time: " <> T.pack err
+  (AlarmReached _, Right s) ->
+    baseTimeText s <> " ALARM!" -- Just append ALARM! to normal output
+  (Normal, Right s) ->
+    baseTimeText s
+  (_, _) ->
+    "Invalid state"
   where
+    baseTimeText s = renderTimeText s (extendedInfo s)
+    
     {-# INLINE extendedInfo #-}
     extendedInfo :: ClockState -> T.Text
     extendedInfo s =
       if s ^. extendedFlag
-        then
-          ( case s ^. currentDate of
-              Just date -> " (" <> T.pack (fmtTime date) <> ")"
-              Nothing -> ""
-          )
+        then case s ^. currentDate of
+          Just date -> " (" <> T.pack (fmtTime date) <> ")"
+          Nothing -> ""
         else ""
 
     {-# INLINE fmtTime #-}
