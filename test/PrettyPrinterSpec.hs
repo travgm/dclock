@@ -23,7 +23,7 @@ instance Arbitrary ClockState where
     ext <- arbitrary
     dtime <- arbitrary
     date <- arbitrary
-    return $ ClockState ext dtime date
+    return $ ClockState ext dtime date Nothing
 
 instance Arbitrary ValidDecimalTime where
   arbitrary = ValidDecimalTime . DecimalTime <$> choose (0, 1000)
@@ -36,7 +36,7 @@ instance Arbitrary LocalTime where
 
 makeClockState :: Bool -> Maybe LocalTime -> Maybe ValidDecimalTime -> ClockState
 makeClockState ext date dtime =
-  ClockState ext dtime date
+  ClockState ext dtime date Nothing
 
 makeValidTime :: Integer -> ValidDecimalTime
 makeValidTime = ValidDecimalTime . DecimalTime
@@ -58,21 +58,30 @@ spec = do
 
   describe "formatTime" $ do
     it "formats error message" $ do
-      Pretty.formatTime (Left "test error") `shouldBe` "Decimal time: test error"
+        Pretty.formatTime (Error "test error") (Left "test error") 
+            `shouldBe` "Decimal time: test error"
 
     it "formats normal time without extended info" $ do
-      let state = makeClockState False Nothing (Just $ makeValidTime 500)
-      Pretty.formatTime (Right state) `shouldBe` "Decimal time: 500"
+        let state = makeClockState False Nothing (Just $ makeValidTime 500)
+        Pretty.formatTime Normal (Right state) 
+            `shouldBe` "Decimal time: 500"
 
     it "formats time with date when extended" $ do
-      let date = LocalTime (fromGregorian 2024 1 1) midnight
-          state = makeClockState True (Just date) (Just $ makeValidTime 500)
-      Pretty.formatTime (Right state) `shouldBe` "Decimal time: 500 (2024-01-01)"
+        let date = LocalTime (fromGregorian 2024 1 1) midnight
+            state = makeClockState True (Just date) (Just $ makeValidTime 500)
+        Pretty.formatTime Normal (Right state) 
+            `shouldBe` "Decimal time: 500 (2024-01-01)"
 
     it "formats NEW with date when extended" $ do
-      let date = LocalTime (fromGregorian 2024 1 1) midnight
-          state = makeClockState True (Just date) (Just $ makeValidTime 0)
-      Pretty.formatTime (Right state) `shouldBe` "Decimal time: NEW (2024-01-01)"
+        let date = LocalTime (fromGregorian 2024 1 1) midnight
+            state = makeClockState True (Just date) (Just $ makeValidTime 0)
+        Pretty.formatTime Normal (Right state) 
+            `shouldBe` "Decimal time: NEW (2024-01-01)"
+
+    it "shows alarm when reached" $ do
+        let state = makeClockState False Nothing (Just $ makeValidTime 500)
+        Pretty.formatTime (AlarmReached (DecimalTime 500)) (Right state)
+            `shouldBe` "Decimal time: 500 ALARM!"
 
     it "always starts with 'Decimal time: '" $ property $ \state ->
-      T.isPrefixOf "Decimal time: " (Pretty.formatTime $ Right state)
+        T.isPrefixOf "Decimal time: " (Pretty.formatTime Normal $ Right state)

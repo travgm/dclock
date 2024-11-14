@@ -31,7 +31,7 @@ instance Arbitrary ZonedTime where
 
 makeTestState :: TimeOfDay -> ClockState
 makeTestState tod =
-  ClockState False Nothing (Just $ LocalTime (fromGregorian 2024 1 1) tod)
+  ClockState False Nothing (Just $ LocalTime (fromGregorian 2024 1 1) tod) Nothing
 
 spec :: Spec
 spec = do
@@ -55,7 +55,7 @@ spec = do
         Left err -> expectationFailure $ "Expected Right but got Left: " ++ err
 
     it "fails when currentDate is Nothing" $ do
-      let state = ClockState False Nothing Nothing
+      let state = ClockState False Nothing Nothing Nothing
       case localTimeToDecimal state of
         Left _ -> return ()
         Right _ -> expectationFailure "Expected Left but got Right"
