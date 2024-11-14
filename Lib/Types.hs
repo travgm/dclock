@@ -18,9 +18,11 @@ module Types (
   , DecimalTime(..)
   , ValidDecimalTime(..)
   , ClockState(..)
+  , TimeStatus(..)
   , extendedFlag
   , decimalTime
   , currentDate
+  , alarmTime
   , Lens
   , Lens''
   , (><)
@@ -28,6 +30,7 @@ module Types (
 
 import Data.Time (LocalTime)
 import qualified Control.Lens as L
+import System.Console.ANSI (ConsoleIntensity(NormalIntensity))
 
 -- | Infix operator for range checking where lower bound is 0
 infixr 5 ><
@@ -45,13 +48,19 @@ newtype DecimalTime = DecimalTime Integer
   deriving (Eq, Show, Ord, Num, Enum, Real, Integral)
 
 -- | Validation for our decimal time values
-newtype ValidDecimalTime = ValidDecimalTime DecimalTime
+newtype ValidDecimalTime = ValidDecimalTime { unVDT :: DecimalTime }
   deriving (Show, Eq)
+
+data TimeStatus
+  = Normal
+  | AlarmReached DecimalTime
+  | Error String
 
 data ClockState = ClockState
   { _extendedFlag :: Bool,
     _decimalTime  :: Maybe ValidDecimalTime,
-    _currentDate  :: Maybe LocalTime
+    _currentDate  :: Maybe LocalTime,
+    _alarmTime    :: Maybe DecimalTime
   }
   deriving (Eq, Show)
 
@@ -59,10 +68,13 @@ type Lens s t a b = forall f. Functor f => (a -> f b) -> s -> f t
 type Lens'' s a = L.Lens s s a a
 
 extendedFlag :: Lens'' ClockState Bool
-extendedFlag k (ClockState e d c) = (\e' -> ClockState e' d c) <$> k e
+extendedFlag k (ClockState e d c a) = (\e' -> ClockState e' d c a) <$> k e
 
 decimalTime :: Lens'' ClockState (Maybe ValidDecimalTime)
-decimalTime k (ClockState e d c) = (\d' -> ClockState e d' c) <$> k d
+decimalTime k (ClockState e d c a) = (\d' -> ClockState e d' c a) <$> k d
 
 currentDate :: Lens'' ClockState (Maybe LocalTime)
-currentDate k (ClockState e d c) = (\c' -> ClockState e d c') <$> k c
+currentDate k (ClockState e d c a) = (\c' -> ClockState e d c' a) <$> k c
+
+alarmTime :: Lens'' ClockState (Maybe DecimalTime)
+alarmTime k (ClockState e d c a) = (\a' -> ClockState e d c a') <$> k a

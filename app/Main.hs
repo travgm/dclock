@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE LambdaCase #-}
 -----------------------------------------------------------------------------
 -- |
 -- Copyright   :  (c) Travis Montoya 2024
@@ -34,14 +35,16 @@ import qualified Data.Text.IO as TIO
 import qualified PrettyPrinter as Pretty (formatTime, displaySingleLine, spinner)
 import qualified DecimalTime as DT (
       localTimeToDecimal,
-      setCurrentDate)
-import Types (ClockState( .. ))
+      setCurrentDate,
+      checkTimeStatus)
+import Types (ClockState( .. ), DecimalTime( .. ))
 
 data RunMode = SingleRun | Watch
 
 data Config = Config
     { extended :: Bool
     , mode     :: RunMode
+    , alarm    :: Maybe Integer
     }
 
 data Command
@@ -59,18 +62,29 @@ parser = versionCmd <|> runCmd
             <> help "Show version information"
         )
 
-    runCmd = fmap Run $
-        Config <$> switch
-        ( long "extended"
-            <> short 'e'
-            <> help "Show extended information including date"
-        )
-        <*> flag
-        SingleRun
-        Watch
-        ( long "watch"
-            <> short 'w'
-            <> help "Watch mode, view as a realtime decimal clock (updates every second)"
+
+runCmd :: Parser Command
+runCmd =
+  Run
+    <$> ( Config
+            <$> switch
+              ( long "extended"
+                  <> short 'e'
+                  <> help "Show extended information including date"
+              )
+            <*> flag
+              SingleRun
+              Watch
+              ( long "watch"
+                  <> short 'w'
+                  <> help "Watch mode"
+              )
+            <*> (optional . option auto)
+              ( long "alarm"
+                  <> short 'a'
+                  <> metavar "TIME"
+                  <> help "Set alarm for decimal time (0-1000, only valid with watch mode)"
+              )
         )
 
 -- | Get platform information for version string
@@ -116,20 +130,22 @@ main = execParser opts >>= run
       where
         runWith :: Config -> IO ()
         runWith config' = case mode config' of
-          SingleRun -> runClock (extended config') >> TIO.putStrLn ""
-          Watch     -> watchClock (extended config')
+            SingleRun -> runClock (extended config') (alarm config') >> TIO.putStrLn ""
+            Watch     -> watchClock (extended config') (alarm config')
 
-        runClock :: Bool -> IO ()
-        runClock e = do
-          let state = ClockState e Nothing Nothing
-          runT_ $
-            zonedTime
-              ~> M.mapping (`DT.setCurrentDate` state)
-              ~> M.mapping DT.localTimeToDecimal
-              ~> M.mapping Pretty.formatTime
-              ~> displayTimeText
+        runClock :: Bool -> Maybe Integer -> IO ()
+        runClock e alarm' = do
+            let state = ClockState e Nothing Nothing (fmap DecimalTime alarm')
+            runT_ $
+                zonedTime
+                ~> M.mapping (`DT.setCurrentDate` state)
+                ~> M.mapping DT.localTimeToDecimal
+                ~> M.mapping (\a -> Pretty.formatTime (DT.checkTimeStatus a) a)
+                ~> displayTimeText
 
-        watchClock :: Bool -> IO ()
-        watchClock extended' = bracket_ hideCursor 
-          showCursor (TIO.putStrLn "Press Ctrl-C to exit\n" >>
-              fix (\loop -> runClock extended' >> Pretty.spinner >> loop))
+        watchClock :: Bool -> Maybe Integer -> IO ()
+        watchClock extended' alarm'' = bracket_ 
+            hideCursor
+            showCursor 
+            (TIO.putStrLn "Press Ctrl-C to exit\n" >>
+                fix (\loop -> runClock extended' alarm'' >> Pretty.spinner >> loop))
