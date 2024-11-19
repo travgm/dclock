@@ -4,6 +4,8 @@
 dclock
 ======
 
+This is a full application. There is a simple implementation in OCaml [here](https://github.com/travgm/dtime)
+
 This was mostly created for my own edification. This takes a simple calculation converting system time 
 to usable decimal minutes left in the day. I wanted to utilize the machines package to create a nice 
 compositional monadic pipeline and learn some new concepts.
