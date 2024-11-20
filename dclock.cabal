@@ -25,7 +25,7 @@ library
    exposed-modules:    DecimalTime,
                        PrettyPrinter,
                        Types
-   build-depends:      base ^>=4.17.2.1,
+   build-depends:      base >=4.17 && < 4.21,
                        time ^>=1.14,
                        lens ^>= 5.2.1,
                        text ^>= 2.1.1,
@@ -39,7 +39,7 @@ executable dclock
 
     main-is:          Main.hs
 
-    build-depends:    base ^>=4.17.2.1,
+    build-depends:    base >=4.17 && < 4.21,
                       dclock,
                       time ^>=1.14,
                       machines ^>= 0.7.2,
