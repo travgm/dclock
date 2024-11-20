@@ -45,6 +45,16 @@ Run `cabal build` and it will download dependencies and build the project. You c
 cabal install --installdir=/usr/local/bin --install-method=copy
 ```
 
+I develop on nix so I added the shell.nix you can clone the repository and run the following:
+
+```
+$ cd dclock
+$ nix-shell
+$ cabal update
+$ cabal build
+$ cabal run
+```
+
 Then you can run it:
 ```
 $ dclock
