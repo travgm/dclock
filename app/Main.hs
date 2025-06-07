@@ -36,9 +36,7 @@ import qualified DecimalTime as DT (
       localTimeToDecimal,
       setCurrentDate,
       checkTimeStatus)
-import Types (ClockState( .. ), DecimalTime( .. ))
-
-data RunMode = SingleRun | Watch
+import Types (ClockState( .. ), DecimalTime( .. ), RunMode(..))
 
 data Config = Config
     { extended :: Bool
@@ -103,8 +101,10 @@ displayValidArgs :: IO ()
 displayValidArgs = TIO.putStrLn "Valid arguments are: -e, -w, -v, --version"
 
 -- | Output the valid decimal time (consumer)
-displayTimeText :: ProcessT IO T.Text ()
-displayTimeText = construct $ await >>= liftIO . Pretty.displaySingleLine
+displayTimeText :: RunMode -> ProcessT IO T.Text ()
+displayTimeText mode' = construct $ do
+  t <- await
+  liftIO $ Pretty.displaySingleLine mode' t
 
 -- | Retrieve initial time and create our process (producer)
 zonedTime :: ProcessT IO k ZonedTime
@@ -128,22 +128,22 @@ main = execParser opts >>= run
       where
         runWith :: Config -> IO ()
         runWith config' = case mode config' of
-            SingleRun -> runClock (extended config') (alarm config') >> TIO.putStrLn ""
-            Watch     -> watchClock (extended config') (alarm config')
+            SingleRun -> runClock (extended config') (alarm config') (mode config') >> TIO.putStrLn ""
+            Watch     -> watchClock (extended config') (alarm config') (mode config')
 
-        runClock :: Bool -> Maybe Integer -> IO ()
-        runClock e alarm' = do
+        runClock :: Bool -> Maybe Integer -> RunMode -> IO ()
+        runClock e alarm' m = do
             let state = ClockState e Nothing Nothing (fmap DecimalTime alarm')
             runT_ $
                 zonedTime
                 ~> M.mapping (`DT.setCurrentDate` state)
                 ~> M.mapping DT.localTimeToDecimal
                 ~> M.mapping (\a -> Pretty.formatTime (DT.checkTimeStatus a) a)
-                ~> displayTimeText
+                ~> displayTimeText m
 
-        watchClock :: Bool -> Maybe Integer -> IO ()
-        watchClock extended' alarm'' = bracket_ 
+        watchClock :: Bool -> Maybe Integer -> RunMode -> IO ()
+        watchClock extended' alarm'' m = bracket_ 
             hideCursor
             showCursor 
             (TIO.putStrLn "Press Ctrl-C to exit\n" >>
-                fix (\loop -> runClock extended' alarm'' >> Pretty.spinner >> loop))
+                fix (\loop -> runClock extended' alarm'' m >> Pretty.spinner >> loop))

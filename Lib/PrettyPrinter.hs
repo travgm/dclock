@@ -19,15 +19,16 @@ module PrettyPrinter (
     , spinner
 ) where
 
-import Types
-  ( ClockState (..),
-    DecimalTime (..),
-    ValidDecimalTime (..),
-    TimeStatus (..),
-    extendedFlag,
-    currentDate,
-    decimalTime,
-    alarmTime)
+import Types (
+        ClockState( .. )
+      , DecimalTime( .. )
+      , ValidDecimalTime( .. )
+      , TimeStatus( .. )
+      , RunMode(..)
+      , extendedFlag
+      , currentDate
+      , decimalTime
+      , alarmTime)
 import Data.Time (LocalTime)
 import Control.Lens ((^.))
 import Control.Monad.IO.Class (liftIO)
@@ -80,10 +81,10 @@ formatTime status state = case (status, state) of
     fmtTime = Time.formatTime Time.defaultTimeLocale "%Y-%m-%d"
 
 -- | Used when we are in WatchClock to update the same line
-displaySingleLine :: T.Text -> IO ()
-displaySingleLine s = do
+displaySingleLine :: RunMode -> T.Text -> IO ()
+displaySingleLine mode s = do
   clearLine
-  setCursorColumn 2
+  setCursorColumn (case mode of Watch -> 2; SingleRun -> 0)
   TIO.putStr s
   hFlush stdout
 

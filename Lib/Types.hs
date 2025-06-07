@@ -19,6 +19,7 @@ module Types (
   , ValidDecimalTime(..)
   , ClockState(..)
   , TimeStatus(..)
+  , RunMode(..)
   , extendedFlag
   , decimalTime
   , currentDate
@@ -55,6 +56,8 @@ data TimeStatus
   = Normal
   | AlarmReached DecimalTime
   | Error String
+
+data RunMode = SingleRun | Watch
 
 data ClockState = ClockState
   { _extendedFlag :: Bool,
