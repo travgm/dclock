@@ -44,6 +44,7 @@ import Data.Time
     getZonedTime)
 import Control.Monad.IO.Class (liftIO)
 import Control.Lens ((^.), (&), (?~))
+import qualified Data.Functor as F
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import PrettyPrinter
@@ -115,7 +116,7 @@ setCurrentDate zt state = state & (currentDate ?~ zonedTimeToLocalTime zt)
 checkAlarmTime :: ClockState -> Maybe DecimalTime
 checkAlarmTime s = do
   alarm <- s ^. alarmTime
-  decimal <- s ^. decimalTime >>= return . unVDT
+  decimal <- (s ^. decimalTime) F.<&> unVDT
   if alarm == decimal
     then Just decimal
     else Nothing
